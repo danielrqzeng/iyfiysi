@@ -1,0 +1,70 @@
+// gen by iyfiysi at {{.CreateTime}}
+package discovery
+
+import (
+    "context"
+    "crypto/tls"
+    "github.com/grpc-ecosystem/go-grpc-prometheus"
+    "github.com/grpc-ecosystem/grpc-gateway/runtime"
+    "github.com/opentracing/opentracing-go"
+    "github.com/spf13/viper"
+    // "go.etcd.io/etcd/clientv3"
+    // etcdnaming "go.etcd.io/etcd/clientv3/naming"
+    "github.com/coreos/etcd/clientv3"
+    etcdnaming "github.com/coreos/etcd/clientv3/naming"
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/credentials"
+    "github.com/grpc-ecosystem/go-grpc-middleware"
+    "time"
+    "{{.Domain}}/{{.AppName}}/tool"
+)
+
+func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jeagerReporterUrl string) (err error) {
+    ctx := context.Background()
+    ctx, cancel := context.WithCancel(ctx)
+    _ = cancel
+    //defer cancel()
+
+    //etcd的客户端实例
+    cli, err := clientv3.New(clientv3.Config{
+        Endpoints:   etcdAddrs,
+        DialTimeout: 5 * time.Second,
+    })
+    if err != nil {
+        panic(err)
+    }
+    //defer cli.Close()
+    r := &etcdnaming.GRPCResolver{Client: cli}
+    balance := grpc.RoundRobin(r)
+
+    tool.InitTracer(jeagerReporterUrl, "{{.AppName}}")
+
+	keystorePublicKey 	:= viper.GetString("keystore.public")
+    c, err1 := credentials.NewClientTLSFromFile(keystorePublicKey, "{{.AppName}}")
+    if err1 != nil {
+        panic(err1)
+    }
+
+    opts := []grpc.DialOption{grpc.WithTransportCredentials(c)}
+    skipcacheck := grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
+        // given the grpc-gateway is always connecting to localhost, does
+        // InsecureSkipVerify=true cause any security issues?
+        InsecureSkipVerify: true,
+    }))
+    opts = append(opts, skipcacheck)
+    //opts := []grpc.DialOption{grpc.WithInsecure()}
+    opts = append(opts, grpc.WithBalancer(balance))
+
+    copts := grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(
+        tool.GatewayTracerClientInterceptor(opentracing.GlobalTracer()),
+        grpc_prometheus.UnaryClientInterceptor,
+        ))
+    opts =append(opts,copts)
+
+
+    err = DoDiscovery(ctx, gwmux,  opts)
+    if err != nil {
+        return
+    }
+    return
+}

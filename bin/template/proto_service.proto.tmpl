@@ -1,0 +1,26 @@
+// gen by iyfiysi at {{.CreateTime}}
+syntax = "proto3";
+package proto;
+option go_package = "proto";
+import "google/api/annotations.proto";
+
+message PingRequest {
+    string value = 1;
+}
+
+message PongResponse {
+    string value = 1;
+}
+
+service {{.AppName}}Service {
+    rpc PingPong(PingRequest) returns (PongResponse) {
+        option (google.api.http) = {
+            post: "/pingpong/v1"
+            body: "*"
+            //additional_bindings {
+            //  post: "/example/echo/v2"
+            //  body: "*"
+            //}
+        };
+    }
+}

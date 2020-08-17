@@ -1,0 +1,14 @@
+protoc -I. -I$GOPATH/src --iyfiysi_out=. service.proto
+go build -o protoc-gen-iyfiysi.exe .
+
+.\iyfiysi.exe new -p surl
+.\iyfiysi.exe new -n test.com -p surl
+
+export GOPROXY=https://goproxy.io,direct
+go env -w GOPROXY=http://goproxy.cn,direct
+
+openssl req -newkey rsa:2048 -nodes -keyout grpc.key -x509 -days 365 -out grpc.pem
+
+cd proto;protoc -I. --go_out=plugins=grpc:. ./service.proto
+cd proto;protoc -I. --grpc-gateway_out=logtostderr=true:. ./service.proto
+cd proto;protoc -I. --iyfiysi_out=logtostderr=true:. ./service.proto

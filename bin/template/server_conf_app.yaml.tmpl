@@ -1,0 +1,29 @@
+# config file gen by iyfiysi at {{.CreateTime}}
+app: "{{.AppName}}"
+version: "{{.Version}}"
+
+# server service
+server:
+  listen: "{{.ServerAddr}}"
+
+# etcd
+etcd:
+  enable: {{.EtcdEnable}}
+  etcdServer:
+{{- range $EtcdServer := .EtcdServers}}
+    - "{{$EtcdServer}}"
+{{end}}
+# jaeger
+jaeger:
+  enable: {{.JaegerEnable}}
+  jaegerServer:
+{{- range $JaegerServer := .JaegerServers}}
+    - "{{$JaegerServer}}"
+{{end}}
+# keystore
+keystore:
+  public: "{{.KeystorePublicKey}}"
+  private: "{{.KeystorePrivateKey}}"
+
+snowflakeNodeID: 0
+# end

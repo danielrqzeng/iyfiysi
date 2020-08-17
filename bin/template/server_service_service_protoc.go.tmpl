@@ -1,0 +1,20 @@
+// gen by iyfiysi at {{.CreateTime}}
+package service
+
+import (
+    "google.golang.org/grpc"
+    "test.com/surl/tool"
+    "github.com/spf13/viper"
+    "fmt"
+    "{{.Domain}}/{{.AppName}}/proto"
+)
+
+func DoRegister(grpcServer *grpc.Server) (err error) {
+    s := &{{$Service.Name}}Impl{}
+    proto.Register{{$Service.Name}}Server(grpcServer, s)
+    instance := viper.GetString("server.listen")
+{{- range $Service := .Services}}
+    tool.Register({{$Service.Route}},instance)
+{{end}}
+    return
+}

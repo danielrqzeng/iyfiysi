@@ -1,0 +1,102 @@
+// gen by iyfiysi at {{.CreateTime}}
+package tool
+
+import (
+	"fmt"
+	"github.com/spf13/viper"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc/naming"
+	// "go.etcd.io/etcd/clientv3"
+    // etcdnaming "go.etcd.io/etcd/clientv3/naming"
+    "github.com/coreos/etcd/clientv3"
+    etcdnaming "github.com/coreos/etcd/clientv3/naming"
+	"time"
+)
+
+var leaseID clientv3.LeaseID
+
+func getEtcdV3Client() (client *clientv3.Client, err error) {
+	etcdEnable := viper.GetBool("etcd.enable")
+	if !etcdEnable {
+		err = fmt.Errorf("etcd not enable")
+		return
+	}
+	etcdAddrs := viper.GetStringSlice("etcd.etcdServer")
+	if len(etcdAddrs) == 0 {
+		err = fmt.Errorf("etcd server not exist")
+		return
+	}
+	client, err = clientv3.New(clientv3.Config{
+		Endpoints:   etcdAddrs,
+		DialTimeout: 5 * time.Second,
+	})
+	return
+}
+
+func initLeaseID() {
+	leaseID = 0
+	go grWatchLease()
+}
+
+func grWatchLease() {
+	//etcd的客户端实例
+	cli, err := getEtcdV3Client()
+	if err != nil {
+		return
+	}
+	//租约
+	leaseCli := clientv3.NewLease(cli)
+	//创建一个租约
+	leaseRsp, err := leaseCli.Grant(context.TODO(), 5) //设置租约5s的有效期
+	if err != nil {
+		return
+	}
+	fmt.Println("leaseID="+fmt.Sprintf("%x", leaseRsp.ID), ",at ", time.Now())
+	//租约的续租
+	leaseCh, err := leaseCli.KeepAlive(context.TODO(), leaseRsp.ID)
+	if err != nil {
+		return
+	}
+	leaseID = leaseRsp.ID
+	go func() {
+		leaseDone := false
+		for {
+			select {
+			case ka, ok := <-leaseCh:
+				if !ok {
+					fmt.Println("lease=", leaseRsp.ID, " get not ok at", time.Now())
+					break
+				}
+				if ka == nil {
+					leaseDone = true
+					fmt.Println("lease=", leaseRsp.ID, " expire at ", time.Now())
+					break
+				}
+				//fmt.Println(ka)
+				fmt.Println("ttl:", ka.TTL)
+			}
+			if leaseDone {
+				break
+			}
+		}
+	}()
+}
+
+func Register(key, instance string) (err error) {
+	//etcd的客户端实例
+	cli, err := getEtcdV3Client()
+	if err != nil {
+		return
+	}
+
+	leaseOpts := clientv3.WithLease(leaseID)
+	//for /example/echo/v1=>EchoService::Echo(proto.StringMessageRequest,proto.StringMessageResponse)
+	//{
+	//	r := &etcdnaming.GRPCResolver{Client: cli}
+	//	r.Update(context.TODO(), "/example/echo/v1", naming.Update{Op: naming.Add, Addr: instance, Metadata: "..."}, leaseOpts)
+	//}
+
+	r := &etcdnaming.GRPCResolver{Client: cli}
+	err = r.Update(context.TODO(), key, naming.Update{Op: naming.Add, Addr: instance, Metadata: "..."}, leaseOpts)
+	return
+}

@@ -1,0 +1,28 @@
+module {{.Domain}}/{{.AppName}}/server
+
+go 1.13
+
+replace {{.Domain}}/{{.AppName}} => ../
+require (
+    {{.Domain}}/{{.AppName}} v0.0.0-00010101000000-000000000000
+    github.com/bwmarrin/snowflake v0.3.0 // indirect
+    github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
+    github.com/coreos/etcd v3.3.22+incompatible
+    github.com/dustin/go-humanize v1.0.0 // indirect
+    github.com/fsnotify/fsnotify v1.4.9
+    github.com/google/uuid v1.1.1 // indirect
+    github.com/gorilla/mux v1.7.4
+    github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
+    github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
+    github.com/grpc-ecosystem/grpc-gateway v1.13.0
+    github.com/opentracing/opentracing-go v1.2.0
+    github.com/prometheus/client_golang v1.7.1
+    github.com/spf13/viper v1.7.1
+    github.com/uber/jaeger-client-go v2.25.0+incompatible // indirect
+    github.com/uber/jaeger-lib v2.2.0+incompatible // indirect
+    go.uber.org/zap v1.15.0
+    golang.org/x/net v0.0.0-20200707034311-ab3426394381
+    google.golang.org/grpc v1.26.0
+    gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
+    sigs.k8s.io/yaml v1.2.0 // indirect
+)

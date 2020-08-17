@@ -1,0 +1,46 @@
+// gen by iyfiysi at {{.CreateTime}}
+
+package service
+
+import (
+    grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+    grpcOpentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+  	"github.com/opentracing/opentracing-go"
+    "google.golang.org/grpc"
+    //"google.golang.org/grpc/naming"
+    "github.com/grpc-ecosystem/go-grpc-middleware"
+    "github.com/grpc-ecosystem/go-grpc-prometheus"
+
+    //"go.etcd.io/etcd/clientv3"
+    //etcdnaming "go.etcd.io/etcd/clientv3/naming"
+
+    //"github.com/coreos/etcd/clientv3"
+    //etcdnaming "github.com/coreos/etcd/clientv3/naming"
+
+
+    "{{.Domain}}/{{.AppName}}/tool"
+    "{{.Domain}}/{{.AppName}}/util"
+)
+
+func Register(etcdAddrs []string, jeagerReporterUrl, instance string) (server *grpc.Server, err error) {
+    err = tool.InitTracer(jeagerReporterUrl, "{{.AppName}}")
+    if err != nil {
+        return
+    }
+    server = grpc.NewServer(
+        grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+            //grpc_ctxtags.UnaryServerInterceptor(),
+            grpcOpentracing.UnaryServerInterceptor(grpcOpentracing.WithTracer(opentracing.GlobalTracer())),
+            grpc_zap.UnaryServerInterceptor(util.MainLogger),
+            grpc_prometheus.UnaryServerInterceptor,
+            //grpc_recovery.UnaryServerInterceptor(),
+        )))
+
+    err = DoRegister(server)
+	if err != nil{
+		return
+	}
+    grpc_prometheus.Register(server)
+    grpc_prometheus.EnableHandlingTimeHistogram()
+	return
+}

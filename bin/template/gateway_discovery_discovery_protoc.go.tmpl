@@ -1,0 +1,18 @@
+// gen by iyfiysi at {{.CreateTime}}
+package discovery
+
+import (
+	"context"
+	"google.golang.org/grpc"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+    gw "{{.Domain}}/{{.AppName}}/proto"
+)
+
+func DoDiscovery(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) (err error) {
+    {{- range $Service := .Services}}
+        err = gw.Register{{$Service.Name}}HandlerFromEndpoint(ctx, gwmux, {{$Service.Route}}, opts)
+        if err != nil {
+            return
+        }
+    {{end}}
+}

@@ -1,0 +1,10 @@
+// gen by iyfiysi at {{.CreateTime}}
+
+package util
+
+import "go.uber.org/zap/zapcore"
+
+func Init() {
+	InitUtil()
+	InitLogger("logs", zapcore.DebugLevel)
+}

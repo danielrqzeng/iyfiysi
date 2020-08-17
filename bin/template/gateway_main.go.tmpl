@@ -1,0 +1,129 @@
+// gen by iyfiysi at {{.CreateTime}}
+
+package main
+
+import (
+    "flag"
+	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/viper"
+	"go.uber.org/zap/zapcore"
+	"net/http"
+    "strings"
+	"fmt"
+	"os"
+    "github.com/grpc-ecosystem/grpc-gateway/runtime"
+
+    "{{.Domain}}/{{.AppName}}/util"
+    "{{.Domain}}/{{.AppName}}/tool"
+    "{{.Domain}}/{{.AppName}}/gateway/discovery"
+)
+
+
+//定义一个全局变量的命令行接收参数
+var (
+	confFlag     = flag.String("conf", "./conf/app.yaml", "configuration file")
+	logDirFlag   = flag.String("log_dir", "./logs", "the dir where to put log file in")
+	logLevelFlag = flag.String("log_level", "info", "log level,one of [debug|info|warning|error]")
+	versionFlag  = flag.Bool("version", false, "print the current version")
+)
+
+// Variables set at build time
+var (
+	version = "v1.0.0"
+	commit  = "unknown"
+	date    = "unknown"
+)
+
+
+func initConfig() {
+	/*
+		不允许同一个文件夹中有同名的配置文件
+		举例若是同时有conf/app.json和conf/app.yaml则无法读取其中一个配置
+		若是有这样情况，可以viper new多个配置实例来搞，不过这样获取配置也需要用那个实例，而不是viper.GetXXX()的方式
+		v1 := viper.New()
+		v1.AddConfigPath("./conf") 	//配置文件所在的路径
+		v1.SetConfigName("app")		//配置文件所在的名称
+		v1.SetConfigType("json")	//配置文件所在的类型
+		err := v.ReadInConfig()
+		if err != nil {
+			panic(fmt.Errorf("Fatal error config file: %s \n", err))
+		}
+		v2 := viper.New()
+		v2.AddConfigPath("./conf") 	//配置文件所在的路径
+		v2.SetConfigName("app")		//配置文件所在的名称
+		v2.SetConfigType("yaml")	//配置文件所在的类型
+		err := v.ReadInConfig()
+		if err != nil {
+			panic(fmt.Errorf("Fatal error config file: %s \n", err))
+		}
+	*/
+
+	//**********conf/app.yaml**********
+	confFile := *confFlag
+	if !strings.HasSuffix(confFile, ".yaml") {
+		panic(fmt.Errorf("config file=%s is not yaml type,pls use the right type", confFile))
+	}
+
+	viper.SetConfigFile(confFile)
+	//viper.AddConfigPath("./conf") //配置文件所在的路径
+	//viper.SetConfigName("app")    //配置文件所在的名称
+	//viper.SetConfigType("yaml")   //配置文件所在的类型
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+
+	//配置变化
+	viper.WatchConfig() //监听配置变化
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		util.MainLogger.Error("config=" + e.Name + " change")
+	})
+}
+
+
+func initLoger() {
+	desc2level := map[string]zapcore.Level{
+		"debug":   zapcore.DebugLevel,
+		"info":    zapcore.InfoLevel,
+		"warning": zapcore.WarnLevel,
+		"error":   zapcore.ErrorLevel,
+	}
+
+	if _, ok := desc2level[*logLevelFlag]; !ok {
+		panic("unknow log level=" + *logLevelFlag)
+	}
+
+	util.InitLogger(*logDirFlag, desc2level[*logLevelFlag])
+}
+
+func initAll() {
+	initConfig()
+	initLoger()
+	util.Init()
+    tool.Init()
+}
+
+func main() {
+	flag.Parse()
+
+	if *versionFlag {
+		fmt.Printf("Version %v, commit %v, built at %v\n", version, commit, date)
+		os.Exit(0)
+	}
+
+	initAll()
+
+	etcdServers := viper.GetStringSlice("etcd.etcdServer")
+	instance := viper.GetString("gateway.listen")
+	jeagerServers := viper.GetStringSlice("jaeger.jaegerServer")
+
+	gwmux := runtime.NewServeMux()
+	discovery.Discovery(gwmux,etcdServers,jeagerServers[0])
+	//mux := gwmux
+	mux := http.NewServeMux()
+	mux.Handle("/", gwmux)
+
+	// Start HTTP server (and proxy calls to gRPC server endpoint)
+	http.ListenAndServe(instance, mux)
+	return
+}
