@@ -7,8 +7,21 @@ go build -o protoc-gen-iyfiysi.exe .
 export GOPROXY=https://goproxy.io,direct
 go env -w GOPROXY=http://goproxy.cn,direct
 
+go build -o protoc-gen-iyfiysi .;cp protoc-gen-iyfiysi /data/go_path/bin/
+
 openssl req -newkey rsa:2048 -nodes -keyout grpc.key -x509 -days 365 -out grpc.pem
 
 cd proto;protoc -I. --go_out=plugins=grpc:. ./service.proto
 cd proto;protoc -I. --grpc-gateway_out=logtostderr=true:. ./service.proto
 cd proto;protoc -I. --iyfiysi_out=logtostderr=true:. ./service.proto
+
+
+ca证书
+./certstrap init --cn ca --passphrase 123456
+./certstrap request-cert --cn grpc --passphrase 123456 --ip 127.0.0.1
+./certstrap sign grpc --CA ca --passphrase 123456
+
+--不能有密码，否则golang不会解析（因为其没有输入密码的选项）
+./certstrap init --cn ca
+./certstrap request-cert --cn grpc --ip 127.0.0.1
+./certstrap sign grpc --CA ca

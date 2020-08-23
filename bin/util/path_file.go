@@ -35,8 +35,8 @@ func IsPathExist(pathName string) (exist bool) {
 }
 
 func DelPath(pathName string) {
-	err :=os.RemoveAll(pathName)
-	if err != nil{
+	err := os.RemoveAll(pathName)
+	if err != nil {
 		fmt.Println(err)
 	}
 }
@@ -47,6 +47,14 @@ func CopyFile(srcFileName, dsrFileName string) (err error) {
 		return
 	}
 	err = ioutil.WriteFile(dsrFileName, input, 0644)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func WriteFile(absFileName string, data []byte) (err error) {
+	err = ioutil.WriteFile(absFileName, data, 0644)
 	if err != nil {
 		return
 	}
