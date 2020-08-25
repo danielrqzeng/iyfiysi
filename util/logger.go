@@ -59,7 +59,7 @@ func newCore(filePath string, level zapcore.Level, maxSize int, maxBackups int, 
 		zapcore.NewConsoleEncoder(encoderConfig),
 		//zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(&hook)), // 打印到控制台和文件
 		zapcore.NewMultiWriteSyncer(zapcore.AddSync(&hook)), // 打印到和文件
-		atomicLevel,                                         // 日志级别
+		atomicLevel, // 日志级别
 	)
 }
 
@@ -104,7 +104,7 @@ func newJsonCore(filePath string, level zapcore.Level, maxSize int, maxBackups i
 		//zapcore.NewConsoleEncoder(encoderConfig),
 		//zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(&hook)), // 打印到控制台和文件
 		zapcore.NewMultiWriteSyncer(zapcore.AddSync(&hook)), // 打印到和文件
-		atomicLevel,                                         // 日志级别
+		atomicLevel, // 日志级别
 	)
 }
 

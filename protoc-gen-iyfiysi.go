@@ -4,15 +4,16 @@ import (
 	"flag"
 	"fmt"
 	"github.com/golang/glog"
+	"github.com/golang/protobuf/proto"
+	descriptor "github.com/golang/protobuf/protoc-gen-go/descriptor"
+	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
+	options "google.golang.org/genproto/googleapis/api/annotations"
 	"io"
 	"io/ioutil"
+	"iyfiysi/component"
 	"os"
 	"path/filepath"
 	"strings"
-	"github.com/golang/protobuf/proto"
-	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
-	options "google.golang.org/genproto/googleapis/api/annotations"
-	descriptor "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"text/template"
 	"time"
 )
@@ -241,22 +242,24 @@ func genGatewayFile(projectBase string, domain, appName string, rpcs []*RpcInfo)
 		return
 	}
 
-	targetWriter, err := os.OpenFile(filepath.Join("..", "gateway", "discovery", "discovery.go"), os.O_CREATE|os.O_WRONLY, 0755)
-	if err != nil {
-		fmt.Println("open failed err:", err)
-		return
-	}
-	fmt.Println("248 save to " + filepath.Join("..", "gateway", "discovery", "discovery.go"))
+	//targetWriter, err := os.OpenFile(filepath.Join("..", "gateway", "discovery", "discovery.go"), os.O_CREATE|os.O_WRONLY, 0755)
+	//if err != nil {
+	//	fmt.Println("open failed err:", err)
+	//	return
+	//}
 	// 创建模板对象, parse关联模板
-	tmpl := template.Must(template.New("genGatewayFile").Parse(gatewayTmpl))
-	fmt.Println("before execute")
-	err = tmpl.Execute(targetWriter, gatewayParams)
-	fmt.Println("after execute")
+	//tmpl := template.Must(template.New("genGatewayFile").Parse(gatewayTmpl))
+	//err := tmpl.Execute(targetWriter, gatewayParams)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	absFile := filepath.Join("..", "gateway", "discovery", "discovery.go")
+	tmplStr, err := component.GetTmpl("gateway_discovery_discovery_protoc.go.tmpl")
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
-	fmt.Println("Done genGatewayFile")
+	err = component.DoWriteFile(tmplStr, gatewayParams, absFile, component.NewDoWriteFileOption(component.DoFormat()))
 }
 
 const serverServiceRpcTmpl = `// gen by iyfiysi at {{.CreateTime}}
@@ -346,7 +349,7 @@ func DoRegister(grpcServer *grpc.Server) (err error) {
 type ServerParams struct {
 	CreateTime      time.Time
 	Domain          string
-	AppName         string `json:"app_name"`
+	AppName         string          `json:"app_name"`
 	ServicesStructs []ServiceParams //要去重
 	Services        []ServiceParams
 }

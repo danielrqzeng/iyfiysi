@@ -33,7 +33,7 @@ func GatewayConfig(projectBase string) (err error) {
 		EtcdServers:        []string{"http://127.0.0.1:2379"},
 		JaegerEnable:       true,
 		JaegerServers:      []string{"localhost:6831"},
-		KeystorePublicKey:  "../keystore/grpc.pem",
+		KeystorePublicKey:  "../keystore/grpc.crt",
 		KeystorePrivateKey: "../keystore/grpc.key",
 	}
 
@@ -73,7 +73,7 @@ func ServerConfig(projectBase string) (err error) {
 		EtcdServers:        []string{"http://127.0.0.1:2379"},
 		JaegerEnable:       true,
 		JaegerServers:      []string{"localhost:6831"},
-		KeystorePublicKey:  "../keystore/grpc.pem",
+		KeystorePublicKey:  "../keystore/grpc.crt",
 		KeystorePrivateKey: "../keystore/grpc.key",
 	}
 	tmplStr, err := GetTmpl("server_conf_app.yaml.tmpl")

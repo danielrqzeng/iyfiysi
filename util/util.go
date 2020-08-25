@@ -259,7 +259,7 @@ func JsonStr2Map(jsonStr string) (m map[string]interface{}, err error) {
 }
 
 func UUID() (id int64) {
-	if gSnowflake==nil{
+	if gSnowflake == nil {
 		nodeId := viper.GetInt64("snowflakeNodeID")
 		gSnowflake, _ = snowflake.NewNode(nodeId)
 	}
@@ -334,7 +334,6 @@ func Shuffle(data []string) {
 		data[i], data[j] = data[j], data[i]
 	}
 }
-
 
 func GetBetweenStr(str, start, end string) string {
 	s := strings.Index(str, start)

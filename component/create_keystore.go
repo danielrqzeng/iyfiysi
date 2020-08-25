@@ -1,12 +1,10 @@
 package component
 
 import (
-	"bytes"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
-	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
@@ -49,89 +47,12 @@ func GenerateSubjectKeyID(pub crypto.PublicKey) ([]byte, error) {
 	return hash[:], nil
 }
 
-func newAuthTemplate() x509.Certificate {
-	// Build CA based on RFC5280
-	return x509.Certificate{
-		SerialNumber: big.NewInt(1),
-		// NotBefore is set to be 10min earlier to fix gap on time difference in cluster
-		NotBefore: time.Now().Add(-600).UTC(),
-		NotAfter:  time.Time{},
-		// Used for certificate signing only
-		KeyUsage: x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
-
-		ExtKeyUsage:        nil,
-		UnknownExtKeyUsage: nil,
-
-		// activate CA
-		BasicConstraintsValid: true,
-		IsCA:                  true,
-		// Not allow any non-self-issued intermediate CA, sets MaxPathLen=0
-		MaxPathLenZero: true,
-
-		// 160-bit SHA-1 hash of the value of the BIT STRING subjectPublicKey
-		// (excluding the tag, length, and number of unused bits)
-		// **SHOULD** be filled in later
-		SubjectKeyId: nil,
-
-		// Subject Alternative Name
-		DNSNames: nil,
-
-		PermittedDNSDomainsCritical: false,
-		PermittedDNSDomains:         nil,
-	}
-}
-
-func GenCA(projectName, projectBase string) (ca *tls.Certificate) {
-	//产生私钥
-	rsaBits := 4096
-	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
-	if err != nil {
-		return
-	}
-
-	//ca证书的其他信息
-	authTemplate := newAuthTemplate()
-	subjectKeyID, err := GenerateSubjectKeyID(priv.Public)
-	if err != nil {
-		return
-	}
-	now := time.Now()
-	authTemplate.SubjectKeyId = subjectKeyID
-	authTemplate.NotAfter = now.Add(time.Second * time.Duration(3600*365*100)) //搞个100年
-	authTemplate.Subject.Country = []string{"CN"}
-	authTemplate.Subject.Province = []string{"Guangdong"}
-	authTemplate.Subject.Organization = []string{"Organization"}
-	authTemplate.Subject.OrganizationalUnit = []string{"OrganizationalUnit"}
-	authTemplate.Subject.CommonName = "ca"
-
-	crtBytes, err := x509.CreateCertificate(rand.Reader, &authTemplate, &authTemplate, priv.Public, priv)
-	if err != nil {
-		return
-	}
-
-	//产生ca的公钥(pem格式)
-	pemBlock := &pem.Block{
-		Type:    "CERTIFICATE",
-		Headers: nil,
-		Bytes:   crtBytes,
-	}
-
-	buf := new(bytes.Buffer)
-	if err := pem.Encode(buf, pemBlock); err != nil {
-		return
-	}
-
-	//util.WriteFile(filepath.Join(projectBase, "keystore", "grpc.key"), buf.Bytes())
-
-	return
-}
-
 func CertFile(projectName, projectBase string) (caPemFile, caKeyFile, prjectCsrFile, prjectKeyFile, projectPemFile string) {
-	caPemFile = filepath.Join(projectBase, "keystore", "ca.pem")
+	caPemFile = filepath.Join(projectBase, "keystore", "ca.crt")
 	caKeyFile = filepath.Join(projectBase, "keystore", "ca.key")
 	prjectCsrFile = filepath.Join(projectBase, "keystore", "grpc.csr")
 	prjectKeyFile = filepath.Join(projectBase, "keystore", "grpc.key")
-	projectPemFile = filepath.Join(projectBase, "keystore", "grpc.pem")
+	projectPemFile = filepath.Join(projectBase, "keystore", "grpc.crt")
 	return
 }
 
@@ -262,7 +183,6 @@ func CreateProjectCert(projectName, projectBase string) (err error) {
 	*/
 	caPK, err := x509.ParsePKCS1PrivateKey(caKeyBlock.Bytes)
 	if err != nil {
-		fmt.Println("line2595", err)
 		return
 	}
 
@@ -274,7 +194,6 @@ func CreateProjectCert(projectName, projectBase string) (err error) {
 	}
 	pemBlock, _ := pem.Decode(csrData)
 	if pemBlock == nil {
-		fmt.Println("pemBlock == nil ")
 		return
 	}
 	csrRaw, err := x509.ParseCertificateRequest(pemBlock.Bytes)
@@ -285,7 +204,6 @@ func CreateProjectCert(projectName, projectBase string) (err error) {
 
 	SubjectKeyId, err := GenerateSubjectKeyID(csrRaw.PublicKey)
 	if err != nil {
-		fmt.Println("line274", err)
 		return
 	}
 
@@ -312,7 +230,6 @@ func CreateProjectCert(projectName, projectBase string) (err error) {
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, caPem, csrRaw.PublicKey, caPK) //DER 格式
 	if err != nil {
-		fmt.Println("line301", err)
 		return
 	}
 	certOut, _ := os.Create(pemFile)
@@ -322,40 +239,11 @@ func CreateProjectCert(projectName, projectBase string) (err error) {
 }
 
 func CreateKeystore(projectName, projectBase string) (err error) {
+	//生成自签名证书，输出ca.key,ca.crt
 	CreateProjectCA(projectName, projectBase)
+	//生成csr，其将会被自签名证书做签名，输出grpc.csr,grpc.key(注意此处的key不可要密码，毕竟grpc不提供解密的逻辑,自己保证私钥不泄漏就是)
 	CreateProjectCSR(projectName, projectBase)
+	//生成公钥证书crt，输出grpc.crt
 	CreateProjectCert(projectName, projectBase)
-	return
-}
-
-func CreateKeystore1(projectName, projectBase string) (err error) {
-	max := new(big.Int).Lsh(big.NewInt(1), 128)   //把 1 左移 128 位，返回给 big.Int
-	serialNumber, _ := rand.Int(rand.Reader, max) //返回在 [0, max) 区间均匀随机分布的一个随机值
-	subject := pkix.Name{                         //Name代表一个X.509识别名。只包含识别名的公共属性，额外的属性被忽略。
-		Organization:       []string{projectName},
-		OrganizationalUnit: []string{projectName},
-		CommonName:         projectName,
-	}
-	template := x509.Certificate{
-		SerialNumber: serialNumber, // SerialNumber 是 CA 颁布的唯一序列号，在此使用一个大随机数来代表它
-		Subject:      subject,
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().Add(365 * 24 * time.Hour),
-		KeyUsage:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign, //KeyUsage 与 ExtKeyUsage 用来表明该证书是用来做服务器认证的
-		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},                                       // 密钥扩展用途的序列
-		//IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
-	}
-	pk, _ := rsa.GenerateKey(rand.Reader, 2048) //生成一对具有指定字位数的RSA密钥
-
-	//CreateCertificate基于模板创建一个新的证书
-	//第二个第三个参数相同，则证书是自签名的
-	//返回的切片是DER编码的证书
-	derBytes, _ := x509.CreateCertificate(rand.Reader, &template, &template, &pk.PublicKey, pk) //DER 格式
-	certOut, _ := os.Create(filepath.Join(projectBase, "keystore", "grpc.pem"))
-	pem.Encode(certOut, &pem.Block{Type: "CERTIFICAET", Bytes: derBytes})
-	certOut.Close()
-	keyOut, _ := os.Create(filepath.Join(projectBase, "keystore", "grpc.key"))
-	pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(pk)})
-	keyOut.Close()
 	return
 }

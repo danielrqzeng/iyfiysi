@@ -4,14 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"github.com/golang/glog"
+	"github.com/golang/protobuf/proto"
+	descriptor "github.com/golang/protobuf/protoc-gen-go/descriptor"
+	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
+	options "google.golang.org/genproto/googleapis/api/annotations"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
-	"github.com/golang/protobuf/proto"
-	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
-	options "google.golang.org/genproto/googleapis/api/annotations"
-	descriptor "github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
 type RpcInfo struct {

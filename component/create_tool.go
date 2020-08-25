@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func CreateUtilInit(projectBase string) (err error) {
-	absFile := filepath.Join(projectBase, "util", "init.go")
+func CreateToolInit(projectBase string) (err error) {
+	absFile := filepath.Join(projectBase, "tool", "init.go")
 	domain, appName := GetDomainAppName(projectBase)
 	c := &DefaultParams{
 		CreateTime: time.Now(),
@@ -14,7 +14,7 @@ func CreateUtilInit(projectBase string) (err error) {
 		AppName:    appName,
 	}
 
-	tmplStr, err := GetTmpl("util_init.go.tmpl")
+	tmplStr, err := GetTmpl("tool_init.go.tmpl")
 	if err != nil {
 		return
 	}
@@ -22,16 +22,15 @@ func CreateUtilInit(projectBase string) (err error) {
 	return
 }
 
-func CreateUtilLogger(projectBase string) (err error) {
-	absFile := filepath.Join(projectBase, "util", "logger.go")
+func CreateToolJaeger(projectBase string) (err error) {
+	absFile := filepath.Join(projectBase, "tool", "jaeger.go")
 	domain, appName := GetDomainAppName(projectBase)
 	c := &DefaultParams{
 		CreateTime: time.Now(),
 		Domain:     domain,
 		AppName:    appName,
 	}
-
-	tmplStr, err := GetTmpl("util_logger.go.tmpl")
+	tmplStr, err := GetTmpl("tool_jaeger.go.tmpl")
 	if err != nil {
 		return
 	}
@@ -39,9 +38,8 @@ func CreateUtilLogger(projectBase string) (err error) {
 	return
 }
 
-
-func CreateUtilUtil(projectBase string) (err error) {
-	absFile := filepath.Join(projectBase, "util", "util.go")
+func CreateToolEtcdv3(projectBase string) (err error) {
+	absFile := filepath.Join(projectBase, "tool", "etcdv3.go")
 	domain, appName := GetDomainAppName(projectBase)
 	c := &DefaultParams{
 		CreateTime: time.Now(),
@@ -49,7 +47,7 @@ func CreateUtilUtil(projectBase string) (err error) {
 		AppName:    appName,
 	}
 
-	tmplStr, err := GetTmpl("util_util.go.tmpl")
+	tmplStr, err := GetTmpl("tool_etcdv3.go.tmpl")
 	if err != nil {
 		return
 	}

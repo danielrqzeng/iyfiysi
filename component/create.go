@@ -2,8 +2,10 @@ package component
 
 import (
 	"fmt"
+	"github.com/rakyll/statik/fs"
 	"go/format"
 	"io/ioutil"
+	_ "iyfiysi/statik"
 	"iyfiysi/util"
 	"os"
 	"path/filepath"
@@ -13,11 +15,31 @@ import (
 )
 
 func GetTmpl(tmplName string) (tmplStr string, err error) {
-	tmplByte, err := ioutil.ReadFile(filepath.Join("template", tmplName))
+	/*	tmplByte, err := ioutil.ReadFile(filepath.Join("template", tmplName))
+		if err != nil {
+			return
+		}
+		tmplStr = string(tmplByte)
+		return*/
+
+	//使用statik打包下模板，以免生成bin文件后有依赖
+	statikFS, err := fs.New()
 	if err != nil {
 		return
 	}
-	tmplStr = string(tmplByte)
+
+	r, err := statikFS.Open("/" + tmplName)
+	if err != nil {
+		fmt.Println(tmplName, err)
+		return
+	}
+	defer r.Close()
+	contents, err := ioutil.ReadAll(r)
+	if err != nil {
+		return
+	}
+
+	tmplStr = string(contents)
 	return
 }
 
@@ -96,7 +118,7 @@ func CreateProject(projectDomain, projectName string) {
 	fmt.Println(goBase, projectName)
 	util.DelPath(filepath.Join(goBase, projectDomain, projectName))
 	//创建项目文件架构
-	projectBase, err := CreateProjectPathStruct(projectName, filepath.Join(goBase, projectDomain, ))
+	projectBase, err := CreateProjectPathStruct(projectName, filepath.Join(goBase, projectDomain))
 	if err != nil {
 		//fmt.Println(err)
 		panic(err)

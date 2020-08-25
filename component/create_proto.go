@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-
 func CreateProtoGenShell(projectBase string) (err error) {
 	absFile := filepath.Join(projectBase, "proto", "gen.sh")
 	domain, appName := GetDomainAppName(projectBase)
@@ -23,7 +22,6 @@ func CreateProtoGenShell(projectBase string) (err error) {
 	err = DoWriteFile(tmplStr, c, absFile, NewDoWriteFileOption())
 	return
 }
-
 
 func CreateProtoNull(projectBase string) (err error) {
 	absFile := filepath.Join(projectBase, "proto", "service.proto")

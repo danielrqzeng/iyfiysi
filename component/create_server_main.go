@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func CreateGatewayMain(projectBase string) (err error) {
-	absFile := filepath.Join(projectBase,"gateway", "main.go")
+func CreateServerMain(projectBase string) (err error) {
+	absFile := filepath.Join(projectBase, "server", "main.go")
 	domain, appName := GetDomainAppName(projectBase)
 	c := &DefaultParams{
 		CreateTime: time.Now(),
@@ -14,7 +14,7 @@ func CreateGatewayMain(projectBase string) (err error) {
 		AppName:    appName,
 	}
 
-	tmplStr, err := GetTmpl("gateway_main.go.tmpl")
+	tmplStr, err := GetTmpl("server_main.go.tmpl")
 	if err != nil {
 		return
 	}

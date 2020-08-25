@@ -1,0 +1,6 @@
+*.exe
+.idea
+.log
+logs
+*.log.*
+*dbdump
