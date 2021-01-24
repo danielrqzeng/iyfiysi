@@ -58,9 +58,11 @@ func CreateProjectPathStruct(projectName string, projectPath string) (projectBas
 	CreateDir("proto/google/rpc", projectBase)
 	CreateDir("server", projectBase)
 	CreateDir("server/conf", projectBase)
+	CreateDir("server/script", projectBase)
 	CreateDir("server/service", projectBase)
 	CreateDir("gateway", projectBase)
 	CreateDir("gateway/conf", projectBase)
+	CreateDir("gateway/script", projectBase)
 	CreateDir("gateway/discovery", projectBase)
 	return
 }

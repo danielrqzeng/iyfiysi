@@ -128,24 +128,31 @@ func CreateProject(projectDomain, projectName string) {
 	err = CreateToolInit(projectBase)
 	err = CreateToolJaeger(projectBase)
 	err = CreateToolEtcdv3(projectBase)
+	err = CreateToolInterceptor(projectBase)
 	err = CreateUtilInit(projectBase)
 	err = CreateUtilLogger(projectBase)
 	err = CreateUtilUtil(projectBase)
 	err = CreateKeystore(projectName, projectBase)
 	//server
 	err = CreateServerMain(projectBase)
+	err = CreateServerBuild(projectBase)
 	err = CreateServerServiceInit(projectBase)
 	err = CreateServerServiceMain(projectBase)
 	err = ServerServiceService(projectBase)
+	err = CreateServerScript(projectBase)
 	//gateway
 	err = CreateGatewayMain(projectBase)
+	err = CreateGatewayBuild(projectBase)
 	err = CreateGatewayDiscoveryInit(projectBase)
 	err = CreateGatewayDiscoveryMain(projectBase)
 	err = GatewayDiscoveryDiscoveryNull(projectBase)
+	err = CreateGatewayScript(projectBase)
 	//proto
 	err = CreateDependentProto(projectBase)
 	err = CreateProtoNull(projectBase)
 	err = CreateProtoGenShell(projectBase)
 	//go.mod
 	err = CreateGoMod(projectBase)
+	//license
+	err = CreateLicense(projectBase)
 }

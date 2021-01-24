@@ -1,0 +1,14 @@
+// gen by iyfiysi at {{.CreateTime}}
+package service
+
+import(
+	"context"
+	"fmt"
+	"{{.Domain}}/{{.AppName}}/proto"
+)
+
+func (s *{{.ServiceName}}Impl) {{.MethodName}}(ctx context.Context, req *{{.RequestName}})  (rsp *{{.ResponseName}}, err error) {
+	rsp =&{{.ResponseName}}{}
+	fmt.Println(req)
+	return
+}

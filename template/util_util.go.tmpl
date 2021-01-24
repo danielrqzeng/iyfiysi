@@ -20,6 +20,10 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"io/ioutil"
+	"crypto/tls"
+    "crypto/x509"
+    "google.golang.org/grpc/credentials"
 )
 
 var gSnowflake *snowflake.Node
@@ -510,4 +514,29 @@ func DeferWhenCoreDump() {
 		MainLogger.Error(string(stack))
 		panic(err)
 	}
+}
+
+func GenCredentials(caFile,pemFile,keyFile,serverName string) (serverCreds,clientCreds credentials.TransportCredentials,err error){
+    cert,_:=tls.LoadX509KeyPair(pemFile,keyFile)
+    certPool := x509.NewCertPool()
+    ca, err := ioutil.ReadFile(caFile)
+    if err != nil{
+        return
+    }
+    certPool.AppendCertsFromPEM(ca)
+
+    //服务端
+    serverCreds =credentials.NewTLS(&tls.Config{
+        Certificates: []tls.Certificate{cert},//服务端证书
+        ServerName:   serverName,
+        ClientCAs:    certPool,
+    })
+
+    //客户端
+    clientCreds = credentials.NewTLS(&tls.Config{
+      	Certificates: []tls.Certificate{cert},
+      	ServerName:   serverName,
+      	RootCAs:      certPool,
+     })
+     return
 }

@@ -54,3 +54,20 @@ func CreateToolEtcdv3(projectBase string) (err error) {
 	err = DoWriteFile(tmplStr, c, absFile, NewDoWriteFileOption(DoFormat()))
 	return
 }
+
+func CreateToolInterceptor(projectBase string) (err error) {
+	absFile := filepath.Join(projectBase, "tool", "interceptor.go")
+	domain, appName := GetDomainAppName(projectBase)
+	c := &DefaultParams{
+		CreateTime: time.Now(),
+		Domain:     domain,
+		AppName:    appName,
+	}
+
+	tmplStr, err := GetTmpl("tool_interceptor.go.tmpl")
+	if err != nil {
+		return
+	}
+	err = DoWriteFile(tmplStr, c, absFile, NewDoWriteFileOption(DoFormat()))
+	return
+}

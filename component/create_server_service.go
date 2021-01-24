@@ -39,7 +39,6 @@ func CreateServerServiceMain(projectBase string) (err error) {
 	return
 }
 
-
 func ServerServiceService(projectBase string) (err error) {
 	absFile := filepath.Join(projectBase, "server", "service", "service.go")
 	domain, appName := GetDomainAppName(projectBase)

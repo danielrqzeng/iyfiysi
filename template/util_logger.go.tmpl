@@ -131,3 +131,19 @@ func InitLogger(logDir string, logLever zapcore.Level) {
 	ApiLogger = NewLogger(path.Join(logDir, "/api.log"), logLever, 23, 30, 7, true, "api")
 	DBLogger = NewLogger(path.Join(logDir, "/db.log"), logLever, 32, 30, 7, true, "db")
 }
+
+
+func InitOneLogger(loggerName, fileName string, logLever zapcore.Level) {
+	switch loggerName {
+	case "main":
+		MainLogger = NewLogger(fileName, logLever, 32, 30, 7, true, "Main")
+	case "http":
+		HttpLogger = NewLogger(fileName, logLever, 32, 30, 7, true, "http")
+	case "grpc":
+		GrpcLogger = NewLogger(fileName, logLever, 32, 30, 7, true, "grpc")
+	case "api":
+		ApiLogger = NewLogger(fileName, logLever, 32, 30, 7, true, "api")
+	case "db":
+		DBLogger = NewLogger(fileName, logLever, 32, 30, 7, true, "db")
+	}
+}

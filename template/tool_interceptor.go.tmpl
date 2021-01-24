@@ -1,0 +1,90 @@
+// gen by iyfiysi at {{.CreateTime}}
+package tool
+
+import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"time"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"golang.org/x/net/context"
+	_ "github.com/opentracing/opentracing-go"
+	
+    "{{.Domain}}/{{.AppName}}/util"
+)
+
+type HttpInterceptorResponseWriter struct {
+	w      http.ResponseWriter
+	status int
+	size   int
+	body   []byte
+}
+
+func (this *HttpInterceptorResponseWriter) Header() http.Header {
+	return this.w.Header()
+}
+
+func (this *HttpInterceptorResponseWriter) Write(b []byte) (int, error) {
+	if this.body == nil {
+		this.body = make([]byte, 0)
+	}
+	size, err := this.w.Write(b)
+	this.size += size
+	this.body = append(this.body, b...)
+	return size, err
+}
+
+func (this *HttpInterceptorResponseWriter) WriteHeader(statusCode int) {
+	this.w.WriteHeader(statusCode)
+	this.status = statusCode
+}
+
+func (this *HttpInterceptorResponseWriter) Status() int {
+	return this.status
+}
+func (this *HttpInterceptorResponseWriter) Body() []byte {
+	return this.body
+}
+
+/*
+func HttpInterceptor(routePath string, handlerFunc func(w http.ResponseWriter, r *http.Request)) (handler func(w http.ResponseWriter, r *http.Request)) {
+	handler = Elapsed(handlerFunc)
+	return
+}
+*/
+
+type HttpInterceptor struct {
+	GrpcMux *runtime.ServeMux
+}
+
+func (s *HttpInterceptor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	//return s.mux.ServeHTTP(w,r)
+    method := r.Method
+    host := r.Host
+    scheme := r.Proto
+    url := r.URL.String()
+    _ = host
+
+	begin := time.Now()
+	ctx := context.Background()
+	httpSpan,ctx := StartTrace(ctx, url)
+    defer httpSpan.Finish()
+    r=r.WithContext(ctx)
+
+    //nested func
+    mw := &HttpInterceptorResponseWriter{w, 0, 0, nil}
+
+    //get reader content
+    rBody, _ := ioutil.ReadAll(r.Body)
+    r.Body.Close()
+    r.Body = ioutil.NopCloser(bytes.NewBuffer(rBody))
+
+    s.GrpcMux.ServeHTTP(mw,r)
+
+    status := mw.Status()
+    wBody := mw.Body()
+
+    util.HttpLogger.Error(fmt.Sprintf("%s %s %s %d|%v|%s|%s", method, url, scheme, status, time.Now().Sub(begin), string(rBody), string(wBody)))
+
+}

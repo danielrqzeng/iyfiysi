@@ -2,28 +2,48 @@
 app: "{{.AppName}}"
 version: "{{.Version}}"
 
-# gateway service
+# gateway service,不支持即改即生效
 gateway:
-  listen: "{{.GatewayAddr}}"
+  listen: "{{.GatewayAddr}}" #侦听的地址，形如:127.0.0.1:8081,:8081
 
-# etcd
+# etcd,不支持即改即生效
 etcd:
-  enable: {{.EtcdEnable}}
+  enable: {{.EtcdEnable}} #是否开启etcd服务，目前只能开启
+  registerKey: "service_{{.AppName}}" #注册服务时候的key
   etcdServer:
 {{- range $EtcdServer := .EtcdServers}}
     - "{{$EtcdServer}}"
 {{end}}
-# jaeger
+# jaeger,不支持即改即生效
 jaeger:
   enable: {{.JaegerEnable}}
   jaegerServer:
 {{- range $JaegerServer := .JaegerServers}}
     - "{{$JaegerServer}}"
 {{end}}
-# keystore
+# keystore,不支持即改即生效
 keystore:
-  public: "{{.KeystorePublicKey}}"
-  private: "{{.KeystorePrivateKey}}"
+  ca: "{{.KeystoreCA}}" #root证书
+  public: "{{.KeystorePublicKey}}" #公钥
+  private: "{{.KeystorePrivateKey}}" #密钥
 
-snowflakeNodeID: 0
+# 日志信息,不支持即改即生效
+logger:
+  - name: "main" #主日志
+    file: "./logs/main.log"
+    level: "debug" #debug|info|warning|error
+  - name: "http" #审计日志
+    file: "./logs/http.log"
+    level: "debug"
+  - name: "api" #api调用日志
+    file: "./logs/api.log"
+    level: "debug"
+  - name: "db" #db请求日志
+    file: "./logs/db.log"
+    level: "debug"
+  - name: "grpc" #grpc请求日志
+    file: "./logs/grpc.log"
+    level: "debug"
+
+snowflakeNodeID: 0 #snowflake需要的node参数
 # end

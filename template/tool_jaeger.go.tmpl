@@ -90,6 +90,27 @@ func encodeKeyValue(k, v string) (string, string) {
 	return k, v
 }
 
+
+func StartTrace(ctx context.Context,pathStr string)(opentracing.Span, context.Context) {
+	//tag
+	//component
+	componentTag := opentracing.Tag{Key: string(ext.Component), Value: "http"}
+	//调用角色
+	callerTag := ext.SpanKindRPCServer
+	//http方法
+	//httpMethodTag := opentracing.Tag{Key: string(ext.HTTPMethod), Value: ctx.Value("method")}
+	//httpurl
+	host := "127.0.0.1"
+	httpUrlTag := opentracing.Tag{Key: string(ext.HTTPUrl), Value: host + pathStr}
+
+	opts := []opentracing.StartSpanOption{
+		callerTag,
+		componentTag,
+		httpUrlTag,
+	}
+	return opentracing.StartSpanFromContext(ctx,pathStr,opts...)
+}
+
 //http访问的span
 func NewHttpAccessSpan(ctx context.Context, tracer opentracing.Tracer, spanName string) (span opentracing.Span) {
 	//获取父span
@@ -170,13 +191,22 @@ func GatewayTracerClientInterceptor(tracer opentracing.Tracer) grpc.UnaryClientI
 		opts ...grpc.CallOption,
 	) error {
 		fmt.Println(":69 GatewayTracerClientInterceptor")
-		httpSpan := NewHttpAccessSpan(ctx, tracer, cc.Target())
-		defer httpSpan.Finish()
-		ctx = opentracing.ContextWithSpan(ctx, httpSpan)
+
+		//ctx = opentracing.ContextWithSpan(ctx, httpSpan)
 
 		rpcClientSpan := NewRpcClientSpan(ctx, tracer, method)
+		defer rpcClientSpan.Finish()
 
 		// Make sure we add this to the metadata of the call, so it gets propagated:
+		/*
+        	md={
+        			"x-forwarded-host":"127.0.0.1:8081",
+        			"grpcgateway-user-agent":"127.0.0.1",
+        			"grpcgateway-accept":"* / *",
+        			"grpcgateway-content-type":"application/json",
+        			"uber-trace-id":"5a6f1497802cc860:11e6e2c9ec1325a2:5a6f1497802cc860:1",
+        	}
+        */
 		md := metautils.ExtractOutgoing(ctx).Clone()
 		if err := tracer.Inject(rpcClientSpan.Context(), opentracing.HTTPHeaders, metadataTextMap(md)); err != nil {
 			grpclog.Infof("grpc_opentracing: failed serializing trace information: %v", err)
@@ -189,8 +219,8 @@ func GatewayTracerClientInterceptor(tracer opentracing.Tracer) grpc.UnaryClientI
 			ext.Error.Set(rpcClientSpan, true)
 			rpcClientSpan.LogFields(log.String("event", "error"), log.String("message", err.Error()))
 		}
-		defer rpcClientSpan.Finish()
 
 		return err
 	}
 }
+

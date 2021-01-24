@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/golang/glog"
 	"github.com/golang/protobuf/proto"
-	descriptor "github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 	options "google.golang.org/genproto/googleapis/api/annotations"
 	"io"
@@ -14,7 +14,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
 	"time"
 )
 
@@ -100,21 +99,16 @@ var (
 
 func main() {
 	//flag.Set("log_dir", "/data/go_path/src") // 日志文件保存目录
-	flag.Set("v", "0")              // 配置V输出的等级
-	flag.Set("logtostderr", "true") // 配置V输出的等级
+	//flag.Set("v", "0")              // 配置V输出的等级
+	//flag.Set("logtostderr", "true") // 配置V输出的等级
 	flag.Parse()
-	glog.V(1).Info("Parsing code generator request")
 	req, err := ParseRequest(os.Stdin)
 	if err != nil {
 		glog.Fatal(err)
 	}
 	glog.V(1).Info("Parsed code generator request")
-	fmt.Println("111 before parse req.Parameter")
 	if req.Parameter != nil {
-		fmt.Println("req.Parameter is not null")
 		for _, p := range strings.Split(req.GetParameter(), ",") {
-			glog.V(1).Info(p)
-			fmt.Println("p=" + p)
 			spec := strings.SplitN(p, "=", 2)
 			if len(spec) == 1 {
 				if err := flag.CommandLine.Set(spec[0], ""); err != nil {
@@ -133,16 +127,12 @@ func main() {
 			}
 		}
 	}
-	for _, target := range req.FileToGenerate {
-		glog.V(1).Info(target)
-	}
+
 	rpcs := make([]*RpcInfo, 0)
 	for _, protofile := range req.ProtoFile {
-		glog.V(1).Info(*protofile.Name)
 		for _, service := range protofile.Service {
-			glog.V(1).Info(*service.Name)
 			for _, rpc := range service.Method {
-				glog.V(1).Infof("method=%s,req=%,rsp=%s", *rpc.Name, rpc.GetInputType(), rpc.GetOutputType())
+				//glog.V(1).Infof("method=%s,req=%,rsp=%s", *rpc.Name, rpc.GetInputType(), rpc.GetOutputType())
 				opts, _ := extractAPIOptions(rpc)
 				rpcInfo := &RpcInfo{}
 				rpcInfo.ServiceName = service.GetName()
@@ -168,42 +158,18 @@ func main() {
 					rpcInfo.Paths = append(rpcInfo.Paths, extPath)
 
 				}
-				glog.V(1).Info(rpcInfo.String())
+				//glog.V(1).Info(rpcInfo.String())
 				rpcs = append(rpcs, rpcInfo)
-				fmt.Println("---------")
-				fmt.Println(rpcInfo.String())
 			}
 		}
 	}
 
-	domain, appName := "test1.com", "surl"
+	domain, appName := "test2.com", "surl"
 	genGatewayFile(`D:\go_path\src\surl`, domain, appName, rpcs)
 	genServiceFile(`D:\go_path\src\surl`, domain, appName, rpcs)
 	genServiceRpcFile(`D:\go_path\src\surl`, domain, appName, rpcs)
 
 }
-
-const gatewayTmpl = `// gen by iyfiysi at {{.CreateTime}}
-package discovery
-
-import (
-	"context"
-	"google.golang.org/grpc"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	gw "{{.Domain}}/{{.AppName}}/proto"
-)
-
-func DoDiscovery(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) (err error) {
-    {{- range $Service := .Services}}
-	//for {{$Service.Route}}=>{{$Service.ServiceName}}::{{$Service.MethodName}}({{$Service.RequestName}},{{$Service.ResponseName}})
-    err = gw.Register{{$Service.ServiceName}}HandlerFromEndpoint(ctx, mux, "{{$Service.Route}}", opts)
-    if err != nil {
-        return
-    }
-    {{end}}
-	return
-}
-`
 
 type ServiceParams struct {
 	//field for gen
@@ -215,10 +181,11 @@ type ServiceParams struct {
 }
 
 type GatewayParams struct {
-	CreateTime time.Time
-	Domain     string
-	AppName    string `json:"app_name"`
-	Services   []ServiceParams
+	CreateTime   time.Time
+	Domain       string
+	AppName      string          `json:"app_name"`
+	ServicesList []ServiceParams //要去重,此得到的是rpc名称
+	RpcList      []ServiceParams
 }
 
 func genGatewayFile(projectBase string, domain, appName string, rpcs []*RpcInfo) {
@@ -226,7 +193,9 @@ func genGatewayFile(projectBase string, domain, appName string, rpcs []*RpcInfo)
 	gatewayParams.CreateTime = time.Now()
 	gatewayParams.Domain = domain
 	gatewayParams.AppName = appName
-	gatewayParams.Services = make([]ServiceParams, 0)
+	gatewayParams.RpcList = make([]ServiceParams, 0)
+	gatewayParams.ServicesList = make([]ServiceParams, 0)
+	serviceExist := make(map[string]bool)
 	for _, rpc := range rpcs {
 		for _, route := range rpc.Paths {
 			params := ServiceParams{}
@@ -235,25 +204,17 @@ func genGatewayFile(projectBase string, domain, appName string, rpcs []*RpcInfo)
 			params.MethodName = rpc.RpcName
 			params.RequestName = rpc.RequestName
 			params.ResponseName = rpc.ResponseName
-			gatewayParams.Services = append(gatewayParams.Services, params)
+			gatewayParams.RpcList = append(gatewayParams.RpcList, params)
+			if _, ok := serviceExist[rpc.ServiceName]; !ok {
+				serviceExist[rpc.ServiceName] = true
+				gatewayParams.ServicesList = append(gatewayParams.ServicesList, params)
+			}
 		}
 	}
-	if len(gatewayParams.Services) == 0 {
+	if len(gatewayParams.RpcList) == 0 {
 		return
 	}
 
-	//targetWriter, err := os.OpenFile(filepath.Join("..", "gateway", "discovery", "discovery.go"), os.O_CREATE|os.O_WRONLY, 0755)
-	//if err != nil {
-	//	fmt.Println("open failed err:", err)
-	//	return
-	//}
-	// 创建模板对象, parse关联模板
-	//tmpl := template.Must(template.New("genGatewayFile").Parse(gatewayTmpl))
-	//err := tmpl.Execute(targetWriter, gatewayParams)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
 	absFile := filepath.Join("..", "gateway", "discovery", "discovery.go")
 	tmplStr, err := component.GetTmpl("gateway_discovery_discovery_protoc.go.tmpl")
 	if err != nil {
@@ -261,22 +222,6 @@ func genGatewayFile(projectBase string, domain, appName string, rpcs []*RpcInfo)
 	}
 	err = component.DoWriteFile(tmplStr, gatewayParams, absFile, component.NewDoWriteFileOption(component.DoFormat()))
 }
-
-const serverServiceRpcTmpl = `// gen by iyfiysi at {{.CreateTime}}
-package service
-
-import(
-	"context"
-	"fmt"
-	"{{.Domain}}/{{.AppName}}/proto"
-)
-
-func (s *{{.ServiceName}}Impl) {{.MethodName}}(ctx context.Context, req *{{.RequestName}})  (rsp *{{.ResponseName}}, err error) {
-	rsp =&{{.ResponseName}}{}
-	fmt.Println(req)
-	return
-}
-`
 
 type ServerServiceRpcParams struct {
 	//field for gen
@@ -291,13 +236,6 @@ type ServerServiceRpcParams struct {
 
 func genServiceRpcFile(projectBase string, domain, appName string, rpcs []*RpcInfo) {
 	for _, rpc := range rpcs {
-
-		fileName := strings.ToLower(rpc.ServiceName) + "." + strings.ToLower(rpc.RpcName) + ".go"
-		targetWriter, err := os.OpenFile(filepath.Join("..", "server", "service", fileName), os.O_CREATE|os.O_WRONLY, 0755)
-		if err != nil {
-			fmt.Println("open failed err:", err)
-			return
-		}
 		params := &ServerServiceRpcParams{}
 		params.Domain = domain
 		params.AppName = appName
@@ -307,61 +245,31 @@ func genServiceRpcFile(projectBase string, domain, appName string, rpcs []*RpcIn
 		params.RequestName = rpc.RequestName
 		params.ResponseName = rpc.ResponseName
 
-		// 创建模板对象, parse关联模板
-		tmpl := template.Must(template.New("genServiceRpcFile" + rpc.ServiceName + rpc.RpcName).Parse(serverServiceRpcTmpl))
-		err = tmpl.Execute(targetWriter, params)
+		fileName := strings.ToLower(rpc.ServiceName) + "." + strings.ToLower(rpc.RpcName) + ".go"
+		absFile := filepath.Join("..", "server", "service", fileName)
+		tmplStr, err := component.GetTmpl("server_service_service_rpc_protoc.go.tmpl")
 		if err != nil {
 			return
 		}
+		err = component.DoWriteFile(tmplStr, params, absFile, component.NewDoWriteFileOption(component.DoFormat()))
 	}
 }
-
-const serverServiceTmpl = `// gen by iyfiysi at {{.CreateTime}}
-package service
-
-import (
-    "google.golang.org/grpc"
-    "github.com/spf13/viper"
-    "{{.Domain}}/{{.AppName}}/tool"
-    "{{.Domain}}/{{.AppName}}/proto"
-)
-
-{{- range $ServicesStruct := .ServicesStructs}}
-type {{$ServicesStruct.ServiceName}}Impl struct{}
-{{end}}
-
-func DoRegister(grpcServer *grpc.Server) (err error) {
-{{range $ServicesStruct := .ServicesStructs}}
-	{
-		s := &{{$ServicesStruct.ServiceName}}Impl{}
-    	proto.Register{{$ServicesStruct.ServiceName}}Server(grpcServer, s)
-	}
-{{end}}
-
-    instance := viper.GetString("server.listen")
-{{- range $Service := .Services}}
-    tool.Register("{{$Service.Route}}",instance)
-{{end}}
-    return
-}
-`
 
 type ServerParams struct {
-	CreateTime      time.Time
-	Domain          string
-	AppName         string          `json:"app_name"`
-	ServicesStructs []ServiceParams //要去重
-	Services        []ServiceParams
+	CreateTime   time.Time
+	Domain       string
+	AppName      string          `json:"app_name"`
+	ServicesList []ServiceParams //要去重,此得到的是rpc名称
+	RpcList      []ServiceParams //此是得到rpc的服务名称
 }
 
 func genServiceFile(projectBase string, domain, appName string, rpcs []*RpcInfo) {
-	fmt.Println("genServiceFile")
 	serverParams := &ServerParams{}
 	serverParams.CreateTime = time.Now()
 	serverParams.Domain = domain
 	serverParams.AppName = appName
-	serverParams.ServicesStructs = make([]ServiceParams, 0)
-	serverParams.Services = make([]ServiceParams, 0)
+	serverParams.ServicesList = make([]ServiceParams, 0)
+	serverParams.RpcList = make([]ServiceParams, 0)
 	serviceExist := make(map[string]bool)
 	for _, rpc := range rpcs {
 		for _, route := range rpc.Paths {
@@ -371,29 +279,22 @@ func genServiceFile(projectBase string, domain, appName string, rpcs []*RpcInfo)
 			params.MethodName = rpc.RpcName
 			params.RequestName = rpc.RequestName
 			params.ResponseName = rpc.ResponseName
-			serverParams.Services = append(serverParams.Services, params)
+			serverParams.RpcList = append(serverParams.RpcList, params)
 			if _, ok := serviceExist[rpc.ServiceName]; !ok {
 				serviceExist[rpc.ServiceName] = true
-				serverParams.ServicesStructs = append(serverParams.ServicesStructs, params)
+				serverParams.ServicesList = append(serverParams.ServicesList, params)
 			}
 		}
 	}
-	if len(serverParams.Services) == 0 {
+	if len(serverParams.RpcList) == 0 {
 		fmt.Println("not found services")
 		return
 	}
 
-	targetWriter, err := os.OpenFile(filepath.Join("..", "server", "service", "service.go"), os.O_CREATE|os.O_WRONLY, 0755)
+	absFile := filepath.Join("..", "server", "service", "service.go")
+	tmplStr, err := component.GetTmpl("server_service_service_protoc.go.tmpl")
 	if err != nil {
-		fmt.Println("open failed err:", err)
 		return
 	}
-	fmt.Println("save to " + filepath.Join("..", "server", "service", "service.go"))
-	// 创建模板对象, parse关联模板
-	tmpl := template.Must(template.New("genServiceFile").Parse(serverServiceTmpl))
-	err = tmpl.Execute(targetWriter, serverParams)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	err = component.DoWriteFile(tmplStr, serverParams, absFile, component.NewDoWriteFileOption(component.DoFormat()))
 }

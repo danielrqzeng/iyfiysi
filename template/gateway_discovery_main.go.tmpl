@@ -3,29 +3,32 @@ package discovery
 
 import (
     "context"
-    "crypto/tls"
+    //"crypto/tls"
     "github.com/grpc-ecosystem/go-grpc-prometheus"
     "github.com/grpc-ecosystem/grpc-gateway/runtime"
     "github.com/opentracing/opentracing-go"
     "github.com/spf13/viper"
-    // "go.etcd.io/etcd/clientv3"
-    // etcdnaming "go.etcd.io/etcd/clientv3/naming"
     "github.com/coreos/etcd/clientv3"
     etcdnaming "github.com/coreos/etcd/clientv3/naming"
     "google.golang.org/grpc"
-    "google.golang.org/grpc/credentials"
+    //"google.golang.org/grpc/credentials"
     "github.com/grpc-ecosystem/go-grpc-middleware"
     "time"
     "{{.Domain}}/{{.AppName}}/tool"
+    "{{.Domain}}/{{.AppName}}/util"
 )
 
-func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jeagerReporterUrl string) (err error) {
+func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jaegerAddrs string) (err error) {
     ctx := context.Background()
     ctx, cancel := context.WithCancel(ctx)
     _ = cancel
     //defer cancel()
 
-    //etcd的客户端实例
+    //全局最终实例初始化
+    tool.InitTracer(jaegerAddrs, "{{.AppName}}")
+
+    
+    //----------etcd的服务发现option-------------------
     cli, err := clientv3.New(clientv3.Config{
         Endpoints:   etcdAddrs,
         DialTimeout: 5 * time.Second,
@@ -35,14 +38,23 @@ func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jeagerReporterUrl st
     }
     //defer cli.Close()
     r := &etcdnaming.GRPCResolver{Client: cli}
-    balance := grpc.RoundRobin(r)
+    lbOption := grpc.WithBalancer(grpc.RoundRobin(r))
 
-    tool.InitTracer(jeagerReporterUrl, "{{.AppName}}")
+    //--------------ssl证书option----------------------
+    caFile := viper.GetString("keystore.ca")
+    privateFile  := viper.GetString("keystore.private")
+    publicFile := viper.GetString("keystore.public")
+    _,clientCred,err:=util.GenCredentials(caFile,publicFile,privateFile,"{{.AppName}}")
+    if err != nil{
+        panic(err)
+    }
+    sslOption := grpc.WithTransportCredentials(clientCred)
 
-	keystorePublicKey 	:= viper.GetString("keystore.public")
-    c, err1 := credentials.NewClientTLSFromFile(keystorePublicKey, "{{.AppName}}")
-    if err1 != nil {
-        panic(err1)
+/*
+	publicFile 	:= viper.GetString("keystore.public")
+    c, tlsErr := credentials.NewClientTLSFromFile(publicFile, "{{.AppName}}")
+    if tlsErr != nil {
+        panic(tlsErr)
     }
 
     opts := []grpc.DialOption{grpc.WithTransportCredentials(c)}
@@ -51,16 +63,22 @@ func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jeagerReporterUrl st
         // InsecureSkipVerify=true cause any security issues?
         InsecureSkipVerify: true,
     }))
-    opts = append(opts, skipcacheck)
-    //opts := []grpc.DialOption{grpc.WithInsecure()}
-    opts = append(opts, grpc.WithBalancer(balance))
+    opts = append(opts, skipcacheck) //无ca
+    */
 
-    copts := grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(
+
+    //--------------拦截器option----------------------
+    interceptorOption := grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(
         tool.GatewayTracerClientInterceptor(opentracing.GlobalTracer()),
         grpc_prometheus.UnaryClientInterceptor,
-        ))
-    opts =append(opts,copts)
+    ))
 
+
+    //所有选项
+    var opts []grpc.DialOption
+    opts = append(opts, lbOption)
+    opts = append(opts, sslOption)
+    opts = append(opts,interceptorOption)
 
     err = DoDiscovery(ctx, gwmux,  opts)
     if err != nil {

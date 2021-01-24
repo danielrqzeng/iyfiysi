@@ -16,6 +16,7 @@ type GatewayConfigParams struct {
 	EtcdServers        []string `json:"etcd_servers"`
 	JaegerEnable       bool     `json:"jaeger_enable"`
 	JaegerServers      []string `json:"jaeger_servers"`
+	KeystoreCA         string   `json:"keystore_ca"`
 	KeystorePublicKey  string   `json:"keystore_public_key"`
 	KeystorePrivateKey string   `json:"keystore_private_key"`
 }
@@ -33,6 +34,7 @@ func GatewayConfig(projectBase string) (err error) {
 		EtcdServers:        []string{"http://127.0.0.1:2379"},
 		JaegerEnable:       true,
 		JaegerServers:      []string{"localhost:6831"},
+		KeystoreCA:         "../keystore/ca.crt",
 		KeystorePublicKey:  "../keystore/grpc.crt",
 		KeystorePrivateKey: "../keystore/grpc.key",
 	}
@@ -56,6 +58,7 @@ type ServerConfigParams struct {
 	EtcdServers        []string `json:"etcd_servers"`
 	JaegerEnable       bool     `json:"jaeger_enable"`
 	JaegerServers      []string `json:"jaeger_servers"`
+	KeystoreCA         string   `json:"keystore_ca"`
 	KeystorePublicKey  string   `json:"keystore_public_key"`
 	KeystorePrivateKey string   `json:"keystore_private_key"`
 }
@@ -73,6 +76,7 @@ func ServerConfig(projectBase string) (err error) {
 		EtcdServers:        []string{"http://127.0.0.1:2379"},
 		JaegerEnable:       true,
 		JaegerServers:      []string{"localhost:6831"},
+		KeystoreCA:         "../keystore/ca.crt",
 		KeystorePublicKey:  "../keystore/grpc.crt",
 		KeystorePrivateKey: "../keystore/grpc.key",
 	}
