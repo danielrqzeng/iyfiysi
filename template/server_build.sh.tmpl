@@ -1,6 +1,6 @@
 #!/bin/sh
 #Copyright (C) 2020 iyfiysi
-#gen by iyfiysi at {{.CreateTime}}
+#gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
 
 BUILT_AT=$(date "+%Y-%m-%d %H:%M:%S") #2020-03-30 10:08:54
 COMMIT_TAG=$(git rev-parse HEAD) #1c7caa847ce196f0668e01794d3cd773944f3127

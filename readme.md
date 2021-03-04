@@ -16,3 +16,6 @@
 	* `git checkout v1.3.2`
 		> 由于太新版本会有兼容性问题，是以此处选择1.3.2版本
 * 安装`protoc-gen-go`:`go install github.com/golang/protobuf/protoc-gen-go`
+
+### 其他组件
+* 集群限流：`https://github.com/platinummonkey/go-concurrency-limits`

@@ -1,0 +1,270 @@
+app: "iyfiysi"
+version: "v1.0.0"
+#
+#  .
+#  |-- api
+#  |-- bin
+#  |-- cmd
+#  |   |-- config
+#  |   |-- gateway
+#  |   `-- server
+#  |-- docs
+#  |-- init
+#  |-- internal
+#  |   |-- app
+#  |   |   |-- gateway
+#  |   |   `-- server
+#  |   `-- pkg
+#  |       |-- logger
+#  |       |-- mysql
+#  |       |-- redis
+#  |       `-- utils
+#  |-- pkg
+#  |-- scripts
+#  `-- third_party
+
+templates:
+  - id: "license" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "license" #可为空
+    desc: "license"
+    src: "LICENSE.tmpl" # 模板原文件
+    dst: "LICENSE" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+  - id: "gomod" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "gomod" #可为空
+    desc: "gomod"
+    src: "go.mod.tmpl" # 模板原文件
+    dst: "go.mod" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+  - id: "utils_init" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "util_init" #可为空dd
+    desc: "公共类初始化"
+    src: "util_init.go.tmpl" # 模板原文件
+    dst: "internal/pkg/utils/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "utils"
+  - id: "utils_util" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "util_init" #可为空dd
+    desc: "公共类初始化"
+    src: "util_util.go.tmpl" # 模板原文件
+    dst: "internal/pkg/utils/util.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "utils"
+  - id: "etcdv3" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "etcdv3" #可为空dd
+    desc: "公共类初始化"
+    src: "etcdv3.go.tmpl" # 模板原文件
+    dst: "internal/pkg/db/etcdv3.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "db"
+  - id: "jaeger" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "etcdv3" #可为空dd
+    desc: "公共类初始化"
+    src: "jaeger.go.tmpl" # 模板原文件
+    dst: "internal/pkg/jaeger/jaeger.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "jaeger"
+  - id: "logger" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "logger" #可为空dd
+    desc: "公共类初始化"
+    src: "logger.go.tmpl" # 模板原文件
+    dst: "internal/pkg/logger/logger.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "logger"
+  - id: "interceptor" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "interceptor" #可为空dd
+    desc: "公共类初始化"
+    src: "interceptor.go.tmpl" # 模板原文件
+    dst: "internal/pkg/interceptor/interceptor.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "interceptor"
+  - id: "proto_google_api_annotations.proto" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "proto_google_api_annotations.proto" #可为空dd
+    desc: ""
+    src: "proto_google_api_annotations.proto.tmpl" # 模板原文件
+    dst: "proto/google/api/annotations.proto" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+  - id: "proto_google_api_http.proto" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "proto_google_api_http.proto" #可为空dd
+    desc: ""
+    src: "proto_google_api_http.proto.tmpl" # 模板原文件
+    dst: "proto/google/api/http.proto" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+  - id: "proto_google_api_httpbody.proto" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "proto_google_api_httpbody.proto" #可为空dd
+    desc: ""
+    src: "proto_google_api_httpbody.proto.tmpl" # 模板原文件
+    dst: "proto/google/api/httpbody.proto" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+  - id: "proto_google_protobuf_descriptor.proto" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "proto_google_protobuf_descriptor.proto" #可为空dd
+    desc: ""
+    src: "proto_google_protobuf_descriptor.proto.tmpl" # 模板原文件
+    dst: "proto/google/protobuf/descriptor.proto" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+  - id: "proto_google_rpc_code.proto" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "proto_google_rpc_code.proto" #可为空dd
+    desc: ""
+    src: "proto_google_rpc_code.proto.tmpl" # 模板原文件
+    dst: "proto/google/rpc/code.proto" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+  - id: "proto_google_rpc_error_details.proto" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "proto_google_rpc_error_details.proto" #可为空dd
+    desc: ""
+    src: "proto_google_rpc_error_details.proto.tmpl" # 模板原文件
+    dst: "proto/google/rpc/error_details.proto" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+  - id: "proto_google_rpc_status.proto" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "proto_google_rpc_status.proto" #可为空dd
+    desc: ""
+    src: "proto_google_rpc_status.proto.tmpl" # 模板原文件
+    dst: "proto/google/rpc/status.proto" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+  - id: "proto_service.proto" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "proto_service.proto" #可为空dd
+    desc: ""
+    src: "proto_service.proto.tmpl" # 模板原文件
+    dst: "proto/service.proto" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+  - id: "proto_gen.sh" #可为空
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "proto_gen.sh" #可为空dd
+    desc: ""
+    src: "proto_gen.sh.tmpl" # 模板原文件
+    dst: "proto/gen.sh" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+  - id: "cmd_gateway_main" #gateway服务的主文件
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "cmd_gateway_main" #可为空dd
+    desc: "gateway bin"
+    src: "gateway_main.go.tmpl" # 模板原文件
+    dst: "cmd/gateway/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "main"
+  - id: "gateway_discovery_init" #服务发现初始文件
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "gateway_discovery_init" #可为空
+    desc: "gateway discovery"
+    src: "gateway_discovery_init.go.tmpl" # 模板原文件
+    dst: "internal/app/gateway/discovery/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "discovery"
+  - id: "gateway_discovery_main" #服务发现主文件
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "gateway_discovery_main" #可为空
+    desc: "gateway discovery"
+    src: "gateway_discovery_main.go.tmpl" # 模板原文件
+    dst: "internal/app/gateway/discovery/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "discovery"
+  - id: "gateway_discovery_discovery" #服务发现实际逻辑文件
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "gateway_discovery_discovery" #可为空
+    desc: "gateway discovery"
+    src: "gateway_discovery_discovery.go.tmpl" # 模板原文件
+    dst: "internal/app/gateway/discovery/discovery.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "discovery"
+  - id: "cmd_server_main" #gateway服务的主文件
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "cmd_server_main" #可为空dd
+    desc: "server bin"
+    src: "server_main.go.tmpl" # 模板原文件
+    dst: "cmd/server/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "main"
+  - id: "server_service_init" #服务初始文件
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "server_service_init" #可为空
+    desc: "service init"
+    src: "server_service_init.go.tmpl" # 模板原文件
+    dst: "internal/app/server/service/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "service"
+  - id: "server_service_main" #服务初始文件
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "server_service_main" #可为空
+    desc: "service init"
+    src: "server_service_main.go.tmpl" # 模板原文件
+    dst: "internal/app/server/service/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "service"
+  - id: "server_service_service" #服务初始文件
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "server_service_service" #可为空
+    desc: "service service"
+    src: "server_service_service.go.tmpl" # 模板原文件
+    dst: "internal/app/server/service/service.go" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      - key: "PackageName"
+        val: "service"
+
+#自签名证书
+keystore:
+  country: "CN" #国家
+  organization: "Tencent" #组织名称
+  organizationalUnit: "CSIG" #事业群
+  commonName: "IYFIYSI" #通用名
+  expireDays: 3650 #证书有效期,默认3650天（即十年)
+  cacrt: "keystore/ca.crt" # 根证书公钥
+  cakey: "keystore/ca.key" # 根证书私钥
+  csr: "keystore/grpc.csr" # 签名申请
+  crt: "keystore/grpc.crt" # 签名公钥，供给grpc服务调用方使用
+  key: "keystore/grpc.key" # 签名私钥，供给grpc服务提供方使用
+  dnsName: #相当于给这个证书限定访问的域名，client访问时候，也是需要带上来的，此处不用ip，是因为ip比较易变
+    - "dnsiyfiysi"
+#end

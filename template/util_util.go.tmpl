@@ -1,5 +1,7 @@
-// gen by iyfiysi at {{.CreateTime}}
-package util
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+
+package {{.PackageName}}
 
 import (
 	"bytes"
@@ -24,6 +26,8 @@ import (
 	"crypto/tls"
     "crypto/x509"
     "google.golang.org/grpc/credentials"
+
+    "{{.Domain}}/{{.AppName}}/internal/pkg/logger"
 )
 
 var gSnowflake *snowflake.Node
@@ -511,7 +515,7 @@ func DeferWhenCoreDump() {
 	if err := recover(); err != nil {
 		//打印栈信息
 		stack := debug.Stack()
-		MainLogger.Error(string(stack))
+		logger.MainLogger.Error(string(stack))
 		panic(err)
 	}
 }
@@ -537,6 +541,7 @@ func GenCredentials(caFile,pemFile,keyFile,serverName string) (serverCreds,clien
       	Certificates: []tls.Certificate{cert},
       	ServerName:   serverName,
       	RootCAs:      certPool,
+      	InsecureSkipVerify: true, //@TODO 此处是否不检查？
      })
      return
 }

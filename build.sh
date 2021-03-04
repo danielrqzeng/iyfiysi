@@ -1,0 +1,1 @@
+statik -src=template; go build -o iyfiysi iyfiysi.go

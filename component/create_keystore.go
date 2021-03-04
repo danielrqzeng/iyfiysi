@@ -65,9 +65,15 @@ func CreateProjectCA(projectName, projectBase string) (err error) {
 		OrganizationalUnit: []string{projectName},
 		CommonName:         projectName,
 	}
+	issuer := pkix.Name{ //Name代表一个X.509识别名。只包含识别名的公共属性，额外的属性被忽略。
+		Organization:       []string{"iyfiysi"},
+		OrganizationalUnit: []string{"iyfiysi"},
+		CommonName:         "iyfiysi",
+	}
 	template := x509.Certificate{
 		SerialNumber: serialNumber, // SerialNumber 是 CA 颁布的唯一序列号，在此使用一个大随机数来代表它
 		Subject:      subject,
+		Issuer:       issuer,
 		// activate CA
 		BasicConstraintsValid: true,
 		IsCA:                  true,

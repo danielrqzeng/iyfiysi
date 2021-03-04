@@ -1,10 +1,12 @@
-// gen by iyfiysi at {{.CreateTime}}
-package service
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+
+package {{.PackageName}}
 
 import (
     "google.golang.org/grpc"
     "github.com/spf13/viper"
-    "{{.Domain}}/{{.AppName}}/tool"
+    "{{.Domain}}/{{.AppName}}/internal/pkg/db"
     "{{.Domain}}/{{.AppName}}/proto"
 )
 
@@ -14,14 +16,14 @@ type {{$Service.ServiceName}}Impl struct{}
 
 func DoRegister(grpcServer *grpc.Server) (err error) {
 {{range $Service := .ServicesList}}
-	{
+	//{
 		s := &{{$Service.ServiceName}}Impl{}
     	proto.Register{{$Service.ServiceName}}Server(grpcServer, s)
-	}
+	//}
 {{end}}
 
     instance := viper.GetString("server.listen")
     serviceKey := viper.GetString("etcd.registerKey")
-    tool.Register(serviceKey,instance)
+    db.Register(serviceKey,instance)
     return
 }

@@ -1,5 +1,7 @@
-// gen by iyfiysi at {{.CreateTime}}
-package discovery
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+
+package {{.PackageName}}
 
 import (
     "context"
@@ -14,8 +16,9 @@ import (
     //"google.golang.org/grpc/credentials"
     "github.com/grpc-ecosystem/go-grpc-middleware"
     "time"
-    "{{.Domain}}/{{.AppName}}/tool"
-    "{{.Domain}}/{{.AppName}}/util"
+
+    "{{.Domain}}/{{.AppName}}/internal/pkg/jaeger"
+    "{{.Domain}}/{{.AppName}}/internal/pkg/utils"
 )
 
 func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jaegerAddrs string) (err error) {
@@ -25,7 +28,7 @@ func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jaegerAddrs string) 
     //defer cancel()
 
     //全局最终实例初始化
-    tool.InitTracer(jaegerAddrs, "{{.AppName}}")
+    jaeger.InitTracer(jaegerAddrs, "{{.AppName}}")
 
     
     //----------etcd的服务发现option-------------------
@@ -41,10 +44,11 @@ func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jaegerAddrs string) 
     lbOption := grpc.WithBalancer(grpc.RoundRobin(r))
 
     //--------------ssl证书option----------------------
+    serverName := viper.GetString("keystore.serverName")
     caFile := viper.GetString("keystore.ca")
     privateFile  := viper.GetString("keystore.private")
     publicFile := viper.GetString("keystore.public")
-    _,clientCred,err:=util.GenCredentials(caFile,publicFile,privateFile,"{{.AppName}}")
+    _,clientCred,err:=utils.GenCredentials(caFile,publicFile,privateFile,serverName)
     if err != nil{
         panic(err)
     }
@@ -69,7 +73,7 @@ func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jaegerAddrs string) 
 
     //--------------拦截器option----------------------
     interceptorOption := grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(
-        tool.GatewayTracerClientInterceptor(opentracing.GlobalTracer()),
+        jaeger.GatewayTracerClientInterceptor(opentracing.GlobalTracer()),
         grpc_prometheus.UnaryClientInterceptor,
     ))
 

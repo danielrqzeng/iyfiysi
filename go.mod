@@ -9,6 +9,7 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.3.2
 	github.com/google/go-cmp v0.3.0 // indirect
+	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/rakyll/statik v0.1.7
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.4.0

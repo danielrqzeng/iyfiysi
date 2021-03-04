@@ -1,10 +1,9 @@
-// gen by iyfiysi at {{.CreateTime}}
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
 
-package util
+package {{.PackageName}}
 
-import "go.uber.org/zap/zapcore"
+//import "go.uber.org/zap/zapcore"
 
 func Init() {
 	InitUtil()
-	InitLogger("logs", zapcore.DebugLevel)
 }

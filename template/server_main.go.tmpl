@@ -1,4 +1,4 @@
-// gen by iyfiysi at {{.CreateTime}}
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
 package main
 
 import (
@@ -15,9 +15,9 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 
-	"{{.Domain}}/{{.AppName}}/server/service"
-	"{{.Domain}}/{{.AppName}}/util"
-    "{{.Domain}}/{{.AppName}}/tool"
+    "{{.Domain}}/{{.AppName}}/internal/pkg/logger"
+    "{{.Domain}}/{{.AppName}}/internal/pkg/utils"
+    "{{.Domain}}/{{.AppName}}/internal/app/server/service"
 )
 
 //定义一个全局变量的命令行接收参数
@@ -50,19 +50,19 @@ func initConfig() {
 	//配置变化
 	viper.WatchConfig() //监听配置变化
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		util.MainLogger.Error("config=" + e.Name + " change")
+		logger.MainLogger.Error("config=" + e.Name + " change")
 	})
 }
 
 
 func initLoger() {
-    type LoggerConfigType struct {
+	type LoggerConfigType struct {
 		Name  string
 		File  string
 		Level string
 	}
-	var loggers []LoggerConfigType
-	err := viper.UnmarshalKey("logger", &loggers)
+	var loggerConfigs []LoggerConfigType
+	err := viper.UnmarshalKey("logger", &loggerConfigs)
 	if err != nil {
 		panic("Unable to unmarshal logger from config")
 	}
@@ -73,11 +73,11 @@ func initLoger() {
 		"error":   zapcore.ErrorLevel,
 	}
 
-	for _, logger := range loggers {
-		if _, ok := desc2level[logger.Level]; !ok {
-			panic("logger config err,unknow logger level=" + logger.Level + " for logger=" + logger.Name)
+	for _, lc := range loggerConfigs {
+		if _, ok := desc2level[lc.Level]; !ok {
+			panic("logger config err,unknow logger level=" + lc.Level + " for logger=" + lc.Name)
 		}
-		util.InitOneLogger(logger.Name, logger.File, desc2level[logger.Level])
+		logger.InitOneLogger(lc.Name, lc.File, desc2level[lc.Level])
 	}
 }
 
@@ -85,8 +85,7 @@ func initAll() {
 	initConfig()
 	initLoger()
 	//做各个部件的初始化
-	util.Init()
-    tool.Init()
+	utils.Init()
 }
 
 func main() {

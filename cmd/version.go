@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"iyfiysi/service"
 )
 
 // Variables set at build time
@@ -19,6 +20,7 @@ var (
 		Long:  "print version",
 		Run: func(c *cobra.Command, args []string) {
 			fmt.Printf("version: %v\ncommit: %v\ndate: %v\n", version, commit, date)
+			service.Gen("test.com", "short_url")
 		},
 	}
 )
