@@ -48,8 +48,9 @@ templates:
     dst: "internal/pkg/utils/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "utils"
+      #      - key: "PackageName"
+      #        val: "utils"
+      PackageName: "utils"
   - id: "utils_util" #可为空
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "util_init" #可为空dd
@@ -58,8 +59,7 @@ templates:
     dst: "internal/pkg/utils/util.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "utils"
+      PackageName: "utils"
   - id: "etcdv3" #可为空
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "etcdv3" #可为空dd
@@ -68,8 +68,7 @@ templates:
     dst: "internal/pkg/db/etcdv3.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "db"
+      PackageName: "db"
   - id: "jaeger" #可为空
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "etcdv3" #可为空dd
@@ -78,8 +77,7 @@ templates:
     dst: "internal/pkg/jaeger/jaeger.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "jaeger"
+      PackageName: "jaeger"
   - id: "logger" #可为空
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "logger" #可为空dd
@@ -88,8 +86,7 @@ templates:
     dst: "internal/pkg/logger/logger.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "logger"
+      PackageName: "logger"
   - id: "interceptor" #可为空
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "interceptor" #可为空dd
@@ -98,8 +95,7 @@ templates:
     dst: "internal/pkg/interceptor/interceptor.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "interceptor"
+      PackageName: "interceptor"
   - id: "proto_google_api_annotations.proto" #可为空
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "proto_google_api_annotations.proto" #可为空dd
@@ -180,8 +176,8 @@ templates:
     dst: "cmd/gateway/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "main"
+      PackageName: "main"
+
   - id: "gateway_discovery_init" #服务发现初始文件
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "gateway_discovery_init" #可为空
@@ -190,8 +186,7 @@ templates:
     dst: "internal/app/gateway/discovery/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "discovery"
+      PackageName: "discovery"
   - id: "gateway_discovery_main" #服务发现主文件
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "gateway_discovery_main" #可为空
@@ -200,8 +195,7 @@ templates:
     dst: "internal/app/gateway/discovery/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "discovery"
+      PackageName: "discovery"
   - id: "gateway_discovery_discovery" #服务发现实际逻辑文件
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "gateway_discovery_discovery" #可为空
@@ -210,8 +204,7 @@ templates:
     dst: "internal/app/gateway/discovery/discovery.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "discovery"
+      PackageName: "discovery"
   - id: "cmd_server_main" #gateway服务的主文件
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "cmd_server_main" #可为空dd
@@ -220,8 +213,7 @@ templates:
     dst: "cmd/server/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "main"
+      PackageName: "main"
   - id: "server_service_init" #服务初始文件
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "server_service_init" #可为空
@@ -230,8 +222,8 @@ templates:
     dst: "internal/app/server/service/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "service"
+      PackageName: "service"
+
   - id: "server_service_main" #服务初始文件
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "server_service_main" #可为空
@@ -240,8 +232,7 @@ templates:
     dst: "internal/app/server/service/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "service"
+      PackageName: "service"
   - id: "server_service_service" #服务初始文件
     type: 1 # 类型，0:none,1:文件类型,2:目录类型
     name: "server_service_service" #可为空
@@ -250,8 +241,29 @@ templates:
     dst: "internal/app/server/service/service.go" # 生成的文件或者目录，其为unix格式的分隔形式
     # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
     params:
-      - key: "PackageName"
-        val: "service"
+      PackageName: "service"
+  - id: "conf_app" #服务初始文件
+    type: 1 # 类型，0:none,1:文件类型,2:目录类型
+    name: "conf_app" #可为空
+    desc: "config file"
+    src: "conf_app.yaml.tmpl" # 模板原文件
+    dst: "conf/app.yaml" # 生成的文件或者目录，其为unix格式的分隔形式
+    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    params:
+      PackageName: "service"
+      Version: "v1.0.0"
+      GatewayAddr: "127.0.0.1:8081"
+      ServerAddr: "127.0.0.1:9091"
+      EtcdEnable: true
+      EtcdServers:
+        - "http://127.0.0.1:2379"
+      JaegerEnable: true
+      JaegerServers:
+        - "localhost:6831"
+      DnsServerName: "dnsiyfiysi"
+      KeystoreCA: "keystore/ca.crt"
+      KeystorePublicKey: "keystore/grpc.crt"
+      KeystorePrivateKey: "keystore/grpc.key"
 
 #自签名证书
 keystore:

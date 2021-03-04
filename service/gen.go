@@ -241,15 +241,13 @@ func GenFile(baseDir string, fileConfig *ProjectFileType) (err error) {
 		return
 	}
 
-	//模板参数
-	params := map[string]interface{}{
-		"CreateTime": time.Now(),
-		"AppName":    filepath.Base(baseDir),
-		"Domain":     "test.com",
+	params := make(map[string]interface{})
+	if fileConfig.Params != nil {
+		params = fileConfig.Params
 	}
-	for _, p := range fileConfig.Params {
-		params[p.Key] = p.Val
-	}
+	params["AppName"] = filepath.Base(baseDir)
+	params["Domain"] = "test.com"
+	params["CreateTime"] = time.Now()
 
 	tmplStr, err := GetTmpl(fileConfig.Src)
 	if err != nil {

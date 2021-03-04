@@ -160,7 +160,7 @@ func DoParse() {
 	}
 
 	domain, appName := "test.com", "short_url"
-	//genGatewayFile(`D:\go_path\src\surl`, domain, appName, rpcs)
+	genGatewayFile(`D:\go_path\src\surl`, domain, appName, rpcs)
 	genServiceFile(`D:\go_path\src\surl`, domain, appName, rpcs)
 	genServiceRpcFile(`D:\go_path\src\surl`, domain, appName, rpcs)
 }

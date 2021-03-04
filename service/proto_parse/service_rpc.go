@@ -22,6 +22,7 @@ type ServerServiceRpcParams struct {
 func genServiceRpcFile(projectBase string, domain, appName string, rpcs []*RpcInfo) {
 	for _, rpc := range rpcs {
 		params := &ServerServiceRpcParams{}
+		params.PackageName = "service"
 		params.ServiceName = "service"
 		params.Domain = domain
 		params.AppName = appName
