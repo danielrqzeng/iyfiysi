@@ -10,18 +10,21 @@ import (
     "{{.Domain}}/{{.AppName}}/proto"
 )
 
-{{- range $Service := .ServicesList}}
-type {{$Service.ServiceName}}Impl struct{}
+{{- range $ServiceName := .Services}}
+type {{$ServiceName}}Impl struct{}
 {{end}}
+
 
 func DoRegister(grpcServer *grpc.Server) (err error) {
-{{range $Service := .ServicesList}}
-	//{
-		s := &{{$Service.ServiceName}}Impl{}
-    	proto.Register{{$Service.ServiceName}}Server(grpcServer, s)
-	//}
+    //本地服务注册
+{{- range $ServiceName := .Services}}
+	{
+		s := &{{$ServiceName}}Impl{}
+    	proto.Register{{$ServiceName}}Server(grpcServer, s)
+	}
 {{end}}
 
+    //注册中心注册
     instance := viper.GetString("server.listen")
     serviceKey := viper.GetString("etcd.registerKey")
     db.Register(serviceKey,instance)

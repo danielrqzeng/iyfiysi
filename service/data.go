@@ -5,25 +5,18 @@ import (
 )
 
 const (
-	templateDir = "template"
-
-	GatewayBuildSh = "GatewayBuildSh"
-
 	//配置的类型
-	TemplateConfigTypeNone = 0
-	TemplateConfigTypeFile = 1
-	TemplateConfigTypeDir  = 2
+	TemplateConfigFlagNone    = 0
+	TemplateConfigFlagFile    = 1
+	TemplateConfigFlagDir     = 2
+	TemplateConfigFlagIyfiysi = 4
+	TemplateConfigFlagProtoc  = 8
 )
-
-type TemplateParamsType struct {
-	Key string `json:"key"`
-	Val string `json:"val"`
-}
 
 //ProjectFileType 项目文件结构
 type ProjectFileType struct {
 	ID     string                 `json:"id"`     //id
-	Type   int                    `json:"type"`   //类型，TemplateConfigType*,0:none,1:文件类型,2:目录类型
+	Flag   int                    `json:"flag"`   //类型，TemplateConfigType*,标识(比特组合)，0:none,1:文件类型,2:目录类型,4:给iyfiysi使用,8:给protoc-gen-iyfiysi使用
 	Name   string                 `json:"name"`   //名称
 	Desc   string                 `json:"desc"`   //描述
 	Src    string                 `json:"src"`    //对应哪个template文件

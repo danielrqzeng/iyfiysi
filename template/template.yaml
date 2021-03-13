@@ -24,231 +24,214 @@ version: "v1.0.0"
 #  `-- third_party
 
 templates:
-  - id: "license" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "license" #可为空
+# 格式说明
+#  - id: "utils_init" #可为空,若是有,则必须唯一
+#    flag: 5 # 标识(比特组合)，0:none,1:文件类型,2:目录类型,4:给iyfiysi使用,8:给protoc-gen-iyfiysi使用
+#    name: "util_init" #模板名称
+#    desc: "公共类初始化" #模板描述
+#    src: "util_init.go.tmpl" # 模板原文件(对应template文件夹中的模板文件,其用statik打包在bin包里面)
+#    dst: "internal/pkg/utils/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
+#    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+#    params:
+#      PackageName: "utils"
+
+  - id: "license"
+    flag: 5 # 5=1+4:文件类型且是给iyfiysi使用
+    name: "license"
     desc: "license"
-    src: "LICENSE.tmpl" # 模板原文件
-    dst: "LICENSE" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    src: "LICENSE.tmpl"
+    dst: "LICENSE"
     params:
-  - id: "gomod" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "gomod" #可为空
-    desc: "gomod"
-    src: "go.mod.tmpl" # 模板原文件
-    dst: "go.mod" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "gomod"
+    flag: 5
+    name: "gomod"
+    desc: "go mod文件"
+    src: "go.mod.tmpl"
+    dst: "go.mod"
     params:
-  - id: "utils_init" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "util_init" #可为空dd
+  - id: "utils_init"
+    flag: 5
+    name: "util_init"
     desc: "公共类初始化"
-    src: "util_init.go.tmpl" # 模板原文件
-    dst: "internal/pkg/utils/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
-    params:
-      #      - key: "PackageName"
-      #        val: "utils"
-      PackageName: "utils"
-  - id: "utils_util" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "util_init" #可为空dd
-    desc: "公共类初始化"
-    src: "util_util.go.tmpl" # 模板原文件
-    dst: "internal/pkg/utils/util.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    src: "util_init.go.tmpl"
+    dst: "internal/pkg/utils/init.go"
     params:
       PackageName: "utils"
-  - id: "etcdv3" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "etcdv3" #可为空dd
+  - id: "utils_util"
+    flag: 5
+    name: "util_init"
     desc: "公共类初始化"
-    src: "etcdv3.go.tmpl" # 模板原文件
-    dst: "internal/pkg/db/etcdv3.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    src: "util_util.go.tmpl"
+    dst: "internal/pkg/utils/util.go"
+    params:
+      PackageName: "utils"
+  - id: "etcdv3"
+    flag: 5
+    name: "etcdv3"
+    desc: "etcd v3的sdk封装"
+    src: "etcdv3.go.tmpl"
+    dst: "internal/pkg/db/etcdv3.go"
     params:
       PackageName: "db"
-  - id: "jaeger" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "etcdv3" #可为空dd
-    desc: "公共类初始化"
-    src: "jaeger.go.tmpl" # 模板原文件
-    dst: "internal/pkg/jaeger/jaeger.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "jaeger"
+    flag: 5
+    name: "etcdv3"
+    desc: "链路追踪的封装"
+    src: "jaeger.go.tmpl"
+    dst: "internal/pkg/jaeger/jaeger.go"
     params:
       PackageName: "jaeger"
-  - id: "logger" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "logger" #可为空dd
-    desc: "公共类初始化"
-    src: "logger.go.tmpl" # 模板原文件
-    dst: "internal/pkg/logger/logger.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "logger"
+    flag: 5
+    name: "logger"
+    desc: "日志"
+    src: "logger.go.tmpl"
+    dst: "internal/pkg/logger/logger.go"
     params:
       PackageName: "logger"
-  - id: "interceptor" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "interceptor" #可为空dd
-    desc: "公共类初始化"
-    src: "interceptor.go.tmpl" # 模板原文件
-    dst: "internal/pkg/interceptor/interceptor.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "interceptor"
+    flag: 5
+    name: "interceptor"
+    desc: "拦截器"
+    src: "interceptor.go.tmpl"
+    dst: "internal/pkg/interceptor/interceptor.go"
     params:
       PackageName: "interceptor"
-  - id: "proto_google_api_annotations.proto" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "proto_google_api_annotations.proto" #可为空dd
-    desc: ""
-    src: "proto_google_api_annotations.proto.tmpl" # 模板原文件
-    dst: "proto/google/api/annotations.proto" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "proto_google_api_annotations.proto"
+    flag: 5
+    name: "proto_google_api_annotations.proto"
+    desc: "proto 依赖"
+    src: "proto_google_api_annotations.proto.tmpl"
+    dst: "proto/google/api/annotations.proto"
     params:
-  - id: "proto_google_api_http.proto" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "proto_google_api_http.proto" #可为空dd
-    desc: ""
-    src: "proto_google_api_http.proto.tmpl" # 模板原文件
-    dst: "proto/google/api/http.proto" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "proto_google_api_http.proto"
+    flag: 5
+    name: "proto_google_api_http.proto"
+    desc: "proto 依赖"
+    src: "proto_google_api_http.proto.tmpl"
+    dst: "proto/google/api/http.proto"
     params:
-  - id: "proto_google_api_httpbody.proto" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "proto_google_api_httpbody.proto" #可为空dd
-    desc: ""
-    src: "proto_google_api_httpbody.proto.tmpl" # 模板原文件
-    dst: "proto/google/api/httpbody.proto" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "proto_google_api_httpbody.proto"
+    flag: 5
+    name: "proto_google_api_httpbody.proto"
+    desc: "protobuf 依赖"
+    src: "proto_google_api_httpbody.proto.tmpl"
+    dst: "proto/google/api/httpbody.proto"
     params:
-  - id: "proto_google_protobuf_descriptor.proto" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "proto_google_protobuf_descriptor.proto" #可为空dd
-    desc: ""
-    src: "proto_google_protobuf_descriptor.proto.tmpl" # 模板原文件
-    dst: "proto/google/protobuf/descriptor.proto" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "proto_google_protobuf_descriptor.proto"
+    flag: 5
+    name: "proto_google_protobuf_descriptor.proto"
+    desc: "protobuf 依赖"
+    src: "proto_google_protobuf_descriptor.proto.tmpl"
+    dst: "proto/google/protobuf/descriptor.proto"
     params:
-  - id: "proto_google_rpc_code.proto" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "proto_google_rpc_code.proto" #可为空dd
-    desc: ""
-    src: "proto_google_rpc_code.proto.tmpl" # 模板原文件
-    dst: "proto/google/rpc/code.proto" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "proto_google_rpc_code.proto"
+    flag: 5
+    name: "proto_google_rpc_code.proto"
+    desc: "protobuf 依赖"
+    src: "proto_google_rpc_code.proto.tmpl"
+    dst: "proto/google/rpc/code.proto"
     params:
-  - id: "proto_google_rpc_error_details.proto" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "proto_google_rpc_error_details.proto" #可为空dd
-    desc: ""
-    src: "proto_google_rpc_error_details.proto.tmpl" # 模板原文件
-    dst: "proto/google/rpc/error_details.proto" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "proto_google_rpc_error_details.proto"
+    flag: 5
+    name: "proto_google_rpc_error_details.proto"
+    desc: "protobuf依赖"
+    src: "proto_google_rpc_error_details.proto.tmpl"
+    dst: "proto/google/rpc/error_details.proto"
     params:
-  - id: "proto_google_rpc_status.proto" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "proto_google_rpc_status.proto" #可为空dd
-    desc: ""
-    src: "proto_google_rpc_status.proto.tmpl" # 模板原文件
-    dst: "proto/google/rpc/status.proto" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "proto_google_rpc_status.proto"
+    flag: 5
+    name: "proto_google_rpc_status.proto"
+    desc: "protobuf依赖"
+    src: "proto_google_rpc_status.proto.tmpl"
+    dst: "proto/google/rpc/status.proto"
     params:
-  - id: "proto_service.proto" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "proto_service.proto" #可为空dd
-    desc: ""
-    src: "proto_service.proto.tmpl" # 模板原文件
-    dst: "proto/service.proto" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "proto_service.proto"
+    flag: 5
+    name: "proto_service.proto"
+    desc: "protobuf 样例 pb文件"
+    src: "proto_service.proto.tmpl"
+    dst: "proto/service.proto"
     params:
-  - id: "proto_gen.sh" #可为空
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "proto_gen.sh" #可为空dd
-    desc: ""
-    src: "proto_gen.sh.tmpl" # 模板原文件
-    dst: "proto/gen.sh" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "proto_gen.sh"
+    flag: 5
+    name: "proto_gen.sh"
+    desc: "生成pb的脚步"
+    src: "proto_gen.sh.tmpl"
+    dst: "proto/gen.sh"
     params:
-  - id: "cmd_gateway_main" #gateway服务的主文件
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "cmd_gateway_main" #可为空dd
+  - id: "cmd_gateway_main"
+    flag: 5
+    name: "cmd_gateway_main"
     desc: "gateway bin"
-    src: "gateway_main.go.tmpl" # 模板原文件
-    dst: "cmd/gateway/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+    src: "gateway_main.go.tmpl"
+    dst: "cmd/gateway/main.go"
     params:
       PackageName: "main"
 
-  - id: "gateway_discovery_init" #服务发现初始文件
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "gateway_discovery_init" #可为空
-    desc: "gateway discovery"
-    src: "gateway_discovery_init.go.tmpl" # 模板原文件
-    dst: "internal/app/gateway/discovery/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "gateway_discovery_init"
+    flag: 5
+    name: "gateway_discovery_init"
+    desc: "gateway服务发现初始文件"
+    src: "gateway_discovery_init.go.tmpl"
+    dst: "internal/app/gateway/discovery/init.go"
     params:
       PackageName: "discovery"
-  - id: "gateway_discovery_main" #服务发现主文件
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "gateway_discovery_main" #可为空
-    desc: "gateway discovery"
-    src: "gateway_discovery_main.go.tmpl" # 模板原文件
-    dst: "internal/app/gateway/discovery/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "gateway_discovery_main"
+    flag: 5
+    name: "gateway_discovery_main"
+    desc: "gateway服务发现主文件"
+    src: "gateway_discovery_main.go.tmpl"
+    dst: "internal/app/gateway/discovery/main.go"
     params:
       PackageName: "discovery"
-  - id: "gateway_discovery_discovery" #服务发现实际逻辑文件
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "gateway_discovery_discovery" #可为空
-    desc: "gateway discovery"
-    src: "gateway_discovery_discovery.go.tmpl" # 模板原文件
-    dst: "internal/app/gateway/discovery/discovery.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "gateway_discovery_discovery"
+    flag: 5
+    name: "gateway_discovery_discovery"
+    desc: "gateway 服务发现实际逻辑文件"
+    src: "gateway_discovery_discovery.go.tmpl"
+    dst: "internal/app/gateway/discovery/discovery.go"
     params:
       PackageName: "discovery"
-  - id: "cmd_server_main" #gateway服务的主文件
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "cmd_server_main" #可为空dd
-    desc: "server bin"
-    src: "server_main.go.tmpl" # 模板原文件
-    dst: "cmd/server/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "cmd_server_main"
+    flag: 5
+    name: "cmd_server_main"
+    desc: "server服务的主文件"
+    src: "server_main.go.tmpl"
+    dst: "cmd/server/main.go"
     params:
       PackageName: "main"
-  - id: "server_service_init" #服务初始文件
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "server_service_init" #可为空
-    desc: "service init"
-    src: "server_service_init.go.tmpl" # 模板原文件
-    dst: "internal/app/server/service/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "server_service_init"
+    flag: 5
+    name: "server_service_init"
+    desc: "server 服务初始文件"
+    src: "server_service_init.go.tmpl"
+    dst: "internal/app/server/service/init.go"
     params:
       PackageName: "service"
 
-  - id: "server_service_main" #服务初始文件
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "server_service_main" #可为空
-    desc: "service init"
-    src: "server_service_main.go.tmpl" # 模板原文件
-    dst: "internal/app/server/service/main.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "server_service_main"
+    flag: 5
+    name: "server_service_main"
+    desc: "server 服务初始文件"
+    src: "server_service_main.go.tmpl"
+    dst: "internal/app/server/service/main.go"
     params:
       PackageName: "service"
-  - id: "server_service_service" #服务初始文件
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "server_service_service" #可为空
-    desc: "service service"
-    src: "server_service_service.go.tmpl" # 模板原文件
-    dst: "internal/app/server/service/service.go" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "server_service_service"
+    flag: 5
+    name: "server_service_service"
+    desc: "server 服务逻辑实现"
+    src: "server_service_service.go.tmpl"
+    dst: "internal/app/server/service/service.go"
     params:
       PackageName: "service"
-  - id: "conf_app" #服务初始文件
-    type: 1 # 类型，0:none,1:文件类型,2:目录类型
-    name: "conf_app" #可为空
-    desc: "config file"
-    src: "conf_app.yaml.tmpl" # 模板原文件
-    dst: "conf/app.yaml" # 生成的文件或者目录，其为unix格式的分隔形式
-    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  - id: "conf_app"
+    flag: 5
+    name: "conf_app"
+    desc: "配置文件"
+    src: "conf_app.yaml.tmpl"
+    dst: "conf/app.yaml"
     params:
       PackageName: "service"
       Version: "v1.0.0"
@@ -264,6 +247,30 @@ templates:
       KeystoreCA: "keystore/ca.crt"
       KeystorePublicKey: "keystore/grpc.crt"
       KeystorePrivateKey: "keystore/grpc.key"
+  - id: "protoc_discovery" #一定要此名称,以分辨此为服务发现配置
+    flag: 9
+    name: "protoc_discovery"
+    desc: "protoc生成的服务发现"
+    src: "protoc_discovery.go.tmpl"
+    dst: "../internal/app/gateway/discovery/discovery.go"
+    params:
+      PackageName: "discovery"
+  - id: "protoc_register" #一定要此名称,以分辨此为服务发现配置
+    flag: 9
+    name: "protoc_register"
+    desc: "protoc生成的服务注册"
+    src: "protoc_register.go.tmpl"
+    dst: "../internal/app/server/service/service.go"
+    params:
+      PackageName: "service"
+  - id: "protoc_impl" #一定要此名称,以分辨此为服务发现配置
+    flag: 10
+    name: "protoc_impl"
+    desc: "protoc生成的服务实现"
+    src: "protoc_impl.go.tmpl"
+    dst: "../internal/app/server/service/"
+    params:
+      PackageName: "service"
 
 #自签名证书
 keystore:

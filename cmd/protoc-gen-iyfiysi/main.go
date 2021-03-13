@@ -1,7 +1,8 @@
 package main
 
-import "iyfiysi/service/proto_parse"
+import pb "iyfiysi/service/proto"
 
 func main() {
-	proto_parse.DoParse()
+	//proto_parse.DoParse()
+	pb.DoParse()
 }

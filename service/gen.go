@@ -179,8 +179,12 @@ func Gen(projectDir, projectName string) (err error) {
 		panic(err)
 	}
 	for _, tmpl := range tmplList {
+		//此配置不是给iyfiysi使用的,跳过
+		if tmpl.Flag&TemplateConfigFlagIyfiysi == 0 {
+			continue
+		}
 		//一个文件类型
-		if tmpl.Type == TemplateConfigTypeFile {
+		if tmpl.Flag&TemplateConfigFlagFile != 0 {
 			err = GenFile(baseDir, &tmpl)
 			if err != nil {
 				//fmt.Println("id=" + tmpl.ID + ",err=" + err.Error())

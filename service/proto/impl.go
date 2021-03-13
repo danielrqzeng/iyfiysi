@@ -1,12 +1,14 @@
-package proto_parse
+package proto
 
 import (
 	"iyfiysi/component"
+	"iyfiysi/service"
 	"path/filepath"
 	"strings"
 	"time"
 )
 
+//生成服务实现代码
 type ServerServiceRpcParams struct {
 	//field for gen
 	PackageName  string
@@ -19,11 +21,10 @@ type ServerServiceRpcParams struct {
 	ResponseName string
 }
 
-func genServiceRpcFile(projectBase string, domain, appName string, rpcs []*RpcInfo) {
+func genServiceRpcFile(packageName string, domain, appName string, rpcs []*RpcInfo) {
 	for _, rpc := range rpcs {
 		params := &ServerServiceRpcParams{}
-		params.PackageName = "service"
-		params.ServiceName = "service"
+		params.PackageName = packageName
 		params.Domain = domain
 		params.AppName = appName
 		params.CreateTime = time.Now()
@@ -40,4 +41,26 @@ func genServiceRpcFile(projectBase string, domain, appName string, rpcs []*RpcIn
 		}
 		err = component.DoWriteFile(tmplStr, params, absFile, component.NewDoWriteFileOption(component.DoFormat()))
 	}
+}
+
+func genServiceImplRpc(
+	tmplFile string,
+	packageName, domain, appName string,
+	rpc *RpcInfo) (buffStr string, err error) {
+	params := &ServerServiceRpcParams{}
+	params.PackageName = packageName
+	params.Domain = domain
+	params.AppName = appName
+	params.CreateTime = time.Now()
+	params.ServiceName = rpc.ServiceName
+	params.MethodName = rpc.RpcName
+	params.RequestName = rpc.RequestName
+	params.ResponseName = rpc.ResponseName
+
+	tmplStr, err := service.GetTmpl(tmplFile)
+	if err != nil {
+		return
+	}
+	buffStr, err = DoTmpl(tmplStr, params)
+	return
 }

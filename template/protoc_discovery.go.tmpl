@@ -13,8 +13,8 @@ import (
 
 func DoDiscovery(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) (err error) {
 	registerKey := viper.GetString("etcd.registerKey")
-	{{- range $Service := .ServicesList}}
-	err = gw.Register{{$Service.ServiceName}}HandlerFromEndpoint(ctx, mux, registerKey, opts)
+	{{- range $ServiceName := .Services}}
+	err = gw.Register{{$ServiceName}}HandlerFromEndpoint(ctx, mux, registerKey, opts)
     if err != nil {
         return
     }
