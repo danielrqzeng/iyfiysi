@@ -1,4 +1,4 @@
-package cmd
+package iyfiysi
 
 import (
 	"github.com/spf13/cobra"
@@ -18,9 +18,8 @@ var (
  */
 
 func init() {
-	rootCmd.AddCommand(newCmd)
-	rootCmd.AddCommand(protoCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(newCmd)
 }
 
 /**

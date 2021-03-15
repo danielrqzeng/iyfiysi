@@ -8,9 +8,8 @@ import(
 	pb "{{.Domain}}/{{.AppName}}/proto"
 )
 
-func (s *{{.ServiceName}}Impl) {{.MethodName}}(
-    ctx context.Context, req *pb.{{.RequestName}})
-     (rsp *pb.{{.ResponseName}}, err error) {
+func (s *{{.ServiceName}}Impl) {{.MethodName}}(ctx context.Context, req *pb.{{.RequestName}})(rsp *pb.{{.ResponseName}}, err error) {
+
 	rsp =&pb.{{.ResponseName}}{}
 	fmt.Println(req)
 	return

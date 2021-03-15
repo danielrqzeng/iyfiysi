@@ -49,6 +49,13 @@ templates:
     src: "go.mod.tmpl"
     dst: "go.mod"
     params:
+  - id: "build.sh"
+    flag: 5
+    name: "build.sh"
+    desc: "linux编译脚本"
+    src: "build.sh.tmpl"
+    dst: "build.sh"
+    params:
   - id: "utils_init"
     flag: 5
     name: "util_init"

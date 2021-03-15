@@ -48,7 +48,6 @@ func InitTracer(jeagerReporterUrl, serviceName string) (err error) {
 		return
 	}
 	opentracing.SetGlobalTracer(tracer)
-	fmt.Println("jeagerReporterUrl=" + jeagerReporterUrl)
 	return
 }
 
@@ -191,7 +190,6 @@ func GatewayTracerClientInterceptor(tracer opentracing.Tracer) grpc.UnaryClientI
 		invoker grpc.UnaryInvoker,
 		opts ...grpc.CallOption,
 	) error {
-		fmt.Println(":69 GatewayTracerClientInterceptor")
 
 		//ctx = opentracing.ContextWithSpan(ctx, httpSpan)
 

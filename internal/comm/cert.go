@@ -1,4 +1,4 @@
-package component
+package comm
 
 import (
 	"crypto"
@@ -12,10 +12,8 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-
 	"math/big"
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -47,28 +45,21 @@ func GenerateSubjectKeyID(pub crypto.PublicKey) ([]byte, error) {
 	return hash[:], nil
 }
 
-func CertFile(projectName, projectBase string) (caPemFile, caKeyFile, prjectCsrFile, prjectKeyFile, projectPemFile string) {
-	caPemFile = filepath.Join(projectBase, "keystore", "ca.crt")
-	caKeyFile = filepath.Join(projectBase, "keystore", "ca.key")
-	prjectCsrFile = filepath.Join(projectBase, "keystore", "grpc.csr")
-	prjectKeyFile = filepath.Join(projectBase, "keystore", "grpc.key")
-	projectPemFile = filepath.Join(projectBase, "keystore", "grpc.crt")
-	return
-}
-
 //项目的签发证书
-func CreateProjectCA(projectName, projectBase string) (err error) {
+func CreateCA(c, o, ou, cn string, caPemFile, caKeyFile string) (err error) {
 	max := new(big.Int).Lsh(big.NewInt(1), 128)   //把 1 左移 128 位，返回给 big.Int
 	serialNumber, _ := rand.Int(rand.Reader, max) //返回在 [0, max) 区间均匀随机分布的一个随机值
 	subject := pkix.Name{                         //Name代表一个X.509识别名。只包含识别名的公共属性，额外的属性被忽略。
-		Organization:       []string{projectName},
-		OrganizationalUnit: []string{projectName},
-		CommonName:         projectName,
+		Country:            []string{c},
+		Organization:       []string{o},
+		OrganizationalUnit: []string{ou},
+		CommonName:         cn,
 	}
 	issuer := pkix.Name{ //Name代表一个X.509识别名。只包含识别名的公共属性，额外的属性被忽略。
-		Organization:       []string{"iyfiysi"},
-		OrganizationalUnit: []string{"iyfiysi"},
-		CommonName:         "iyfiysi",
+		Country:            []string{c},
+		Organization:       []string{o},
+		OrganizationalUnit: []string{ou},
+		CommonName:         cn,
 	}
 	template := x509.Certificate{
 		SerialNumber: serialNumber, // SerialNumber 是 CA 颁布的唯一序列号，在此使用一个大随机数来代表它
@@ -96,7 +87,6 @@ func CreateProjectCA(projectName, projectBase string) (err error) {
 	}
 	template.SubjectKeyId = subjectKeyID
 
-	caPemFile, caKeyFile, _, _, _ := CertFile(projectName, projectBase)
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &pk.PublicKey, pk)
 	if err != nil {
 		return
@@ -111,11 +101,12 @@ func CreateProjectCA(projectName, projectBase string) (err error) {
 }
 
 //项目的csr
-func CreateProjectCSR(projectName, projectBase string) (err error) {
+func CreateCSR(c, o, ou, cn string, csrFile, keyFile string) (err error) {
 	subject := pkix.Name{ //Name代表一个X.509识别名。只包含识别名的公共属性，额外的属性被忽略。
-		Organization:       []string{projectName},
-		OrganizationalUnit: []string{projectName},
-		CommonName:         projectName,
+		Country:            []string{c},
+		Organization:       []string{o},
+		OrganizationalUnit: []string{ou},
+		CommonName:         cn,
 	}
 
 	template := x509.CertificateRequest{
@@ -128,8 +119,6 @@ func CreateProjectCSR(projectName, projectBase string) (err error) {
 		return
 	}
 
-	_, _, csrFile, keyFile, _ := CertFile(projectName, projectBase)
-
 	csrBytes, _ := x509.CreateCertificateRequest(rand.Reader, &template, pk)
 	certOut, _ := os.Create(csrFile)
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrBytes, Headers: nil})
@@ -141,8 +130,10 @@ func CreateProjectCSR(projectName, projectBase string) (err error) {
 }
 
 //项目的证书
-func CreateProjectCert(projectName, projectBase string) (err error) {
-	caPemFile, caKeyFile, csrFile, _, pemFile := CertFile(projectName, projectBase)
+func CreateCert(c, o, ou, cn string,
+	caPemFile, caKeyFile, csrFile, crtFile, keyFile string,
+	dnsName []string,
+	expireDay int) (err error) {
 	//先读取ca
 	caData, err := ioutil.ReadFile(caPemFile)
 	if err != nil {
@@ -216,40 +207,34 @@ func CreateProjectCert(projectName, projectBase string) (err error) {
 	max := new(big.Int).Lsh(big.NewInt(1), 128)   //把 1 左移 128 位，返回给 big.Int
 	serialNumber, _ := rand.Int(rand.Reader, max) //返回在 [0, max) 区间均匀随机分布的一个随机值
 	subject := pkix.Name{                         //Name代表一个X.509识别名。只包含识别名的公共属性，额外的属性被忽略。
-		Organization:       []string{projectName},
-		OrganizationalUnit: []string{projectName},
-		CommonName:         projectName,
+		Country:            []string{c},
+		Organization:       []string{o},
+		OrganizationalUnit: []string{ou},
+		CommonName:         cn,
 	}
 	template := x509.Certificate{
 		SubjectKeyId: SubjectKeyId,
 		SerialNumber: serialNumber, // SerialNumber 是 CA 颁布的唯一序列号，在此使用一个大随机数来代表它
 		Subject:      subject,
 		NotBefore:    time.Now(),
-		NotAfter:     time.Now().Add(100 * 365 * 24 * time.Hour),
+		NotAfter:     time.Now().Add(time.Duration(expireDay*24) * time.Hour),
 		KeyUsage:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDataEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageKeyAgreement,
 		ExtKeyUsage: []x509.ExtKeyUsage{
 			x509.ExtKeyUsageServerAuth,
 			x509.ExtKeyUsageClientAuth,
 		}, // 密钥扩展用途的序列
 		RawSubject: csrRaw.RawSubject,
+		//IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
+		DNSNames: dnsName,
+		//EmailAddresses:[]string{"loongtime@gmail.com"},
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, caPem, csrRaw.PublicKey, caPK) //DER 格式
 	if err != nil {
 		return
 	}
-	certOut, _ := os.Create(pemFile)
+	certOut, _ := os.Create(crtFile)
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes, Headers: nil})
 	certOut.Close()
-	return
-}
-
-func CreateKeystore(projectName, projectBase string) (err error) {
-	//生成自签名证书，输出ca.key,ca.crt
-	CreateProjectCA(projectName, projectBase)
-	//生成csr，其将会被自签名证书做签名，输出grpc.csr,grpc.key(注意此处的key不可要密码，毕竟grpc不提供解密的逻辑,自己保证私钥不泄漏就是)
-	CreateProjectCSR(projectName, projectBase)
-	//生成公钥证书crt，输出grpc.crt
-	CreateProjectCert(projectName, projectBase)
 	return
 }

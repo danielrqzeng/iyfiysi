@@ -1,22 +1,21 @@
-package cmd
+package iyfiysi
 
 import (
 	"github.com/spf13/cobra"
-	"iyfiysi/component"
+	"iyfiysi/internal/comm"
 )
 
 var (
 	projectDomain = ""
-	projectName   = ""
-	projectPath   = "."
+	appName       = ""
 
 	newCmd = &cobra.Command{
 		Use:   "new",
 		Short: "new a project",
 		Long:  "new a project",
 		Run: func(c *cobra.Command, args []string) {
-			print("newCmd")
-			component.CreateProject(projectDomain, projectName)
+			comm.Gen(projectDomain, appName)
+
 		},
 	}
 )
@@ -25,8 +24,7 @@ var (
  * @brief 解析命令参数
  */
 func init() {
-	newCmd.PersistentFlags().StringVarP(&projectPath, "dir", "d", ".", "project dir")
-	newCmd.PersistentFlags().StringVarP(&projectName, "project", "p", "", "project name")
+	newCmd.PersistentFlags().StringVarP(&appName, "app", "a", "", "app name")
 	newCmd.PersistentFlags().StringVarP(&projectDomain, "domain", "n", "", "project domain,go mod need this")
-	//.\iyfiysi.exe new -n test.com -p surl
+	//.\iyfiysi.exe new -n test.com -a surl
 }

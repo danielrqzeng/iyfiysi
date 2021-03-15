@@ -17,7 +17,7 @@ import (
 	options "google.golang.org/genproto/googleapis/api/annotations"
 	"io"
 	"io/ioutil"
-	"iyfiysi/service"
+	"iyfiysi/internal/comm"
 	"iyfiysi/util"
 	"os"
 	"strings"
@@ -144,7 +144,7 @@ func DoParse() {
 	if err != nil {
 		glog.Fatal(err)
 	}
-	err = service.InitGenConfig()
+	err = comm.InitGenConfig()
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -246,7 +246,7 @@ func DoParse() {
 	defaultParams["CreateTime"] = time.Now()
 
 	//读取配置文件
-	var tmplList []service.ProjectFileType
+	var tmplList []comm.ProjectFileType
 	err = viper.UnmarshalKey("templates", &tmplList)
 	if err != nil {
 		glog.Error("failed to Unmarshal config,err=" + aurora.Red(err.Error()).String())
@@ -255,7 +255,7 @@ func DoParse() {
 	glog.Error("mark1")
 	for _, tmpl := range tmplList {
 		//此配置不是给protoc_iyfiysi_out使用的,跳过
-		if tmpl.Flag&service.TemplateConfigFlagProtoc == 0 {
+		if tmpl.Flag&comm.TemplateConfigFlagProtoc == 0 {
 			continue
 		}
 		glog.Error("id=" + tmpl.ID)
@@ -281,7 +281,7 @@ func DoParse() {
 			for k, v := range tmpl.Params {
 				params[k] = v
 			}
-			tmplStr, err := service.GetTmpl(tmpl.Src)
+			tmplStr, err := comm.GetTmpl(tmpl.Src)
 			if err != nil {
 				glog.Error(err, "failed to get template="+tmpl.Src)
 				return
@@ -328,7 +328,7 @@ func DoParse() {
 			for k, v := range tmpl.Params {
 				params[k] = v
 			}
-			tmplStr, err := service.GetTmpl(tmpl.Src)
+			tmplStr, err := comm.GetTmpl(tmpl.Src)
 			if err != nil {
 				glog.Error(err, "failed to get template="+tmpl.Src)
 				return
@@ -365,7 +365,7 @@ func DoParse() {
 			for k, v := range tmpl.Params {
 				params[k] = v
 			}
-			tmplStr, err := service.GetTmpl(tmpl.Src)
+			tmplStr, err := comm.GetTmpl(tmpl.Src)
 			if err != nil {
 				glog.Error(err, "failed to get template="+tmpl.Src)
 				return

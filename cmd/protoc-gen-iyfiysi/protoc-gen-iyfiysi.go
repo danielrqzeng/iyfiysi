@@ -1,6 +1,9 @@
 package main
 
-import pb "iyfiysi/service/proto"
+import (
+	pb "iyfiysi/internal/proto"
+	_ "iyfiysi/statik"
+)
 
 func main() {
 	//proto_parse.DoParse()
