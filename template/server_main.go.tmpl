@@ -1,29 +1,29 @@
 // gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
 package main
 
 import (
 	"flag"
 	"fmt"
-	"go.uber.org/zap/zapcore"
+	"github.com/fsnotify/fsnotify"
+	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc/reflection"
+	"net/http"
 	"os"
 	"strings"
-	"net/http"
-	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/client_golang/prometheus"
-	"google.golang.org/grpc/reflection"
-	"github.com/fsnotify/fsnotify"
-	"github.com/spf13/viper"
 
-    "{{.Domain}}/{{.AppName}}/internal/pkg/logger"
-    "{{.Domain}}/{{.AppName}}/internal/pkg/utils"
-    "{{.Domain}}/{{.AppName}}/internal/app/server/service"
+	"{{.Domain}}/{{.AppName}}/internal/app/server/service"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
 )
 
 //定义一个全局变量的命令行接收参数
 var (
-	confFlag     = flag.String("conf", "./conf/app.yaml", "configuration file")
-	versionFlag  = flag.Bool("version", false, "print the current version")
+	confFlag    = flag.String("conf", "./conf/app.yaml", "configuration file")
+	versionFlag = flag.Bool("version", false, "print the current version")
 )
 
 // Variables set at build time
@@ -32,7 +32,6 @@ var (
 	commit  = "unknown"
 	date    = "unknown"
 )
-
 
 func initConfig() {
 	//**********conf/app.yaml**********
@@ -54,38 +53,106 @@ func initConfig() {
 	})
 }
 
-
-func initLoger() {
-	type LoggerConfigType struct {
-		Name  string
-		File  string
-		Level string
-	}
-	var loggerConfigs []LoggerConfigType
-	err := viper.UnmarshalKey("logger", &loggerConfigs)
-	if err != nil {
-		panic("Unable to unmarshal logger from config")
-	}
-	desc2level := map[string]zapcore.Level{
-		"debug":   zapcore.DebugLevel,
-		"info":    zapcore.InfoLevel,
-		"warning": zapcore.WarnLevel,
-		"error":   zapcore.ErrorLevel,
-	}
-
-	for _, lc := range loggerConfigs {
-		if _, ok := desc2level[lc.Level]; !ok {
-			panic("logger config err,unknow logger level=" + lc.Level + " for logger=" + lc.Name)
-		}
-		logger.InitOneLogger(lc.Name, lc.File, desc2level[lc.Level])
-	}
-}
-
 func initAll() {
 	initConfig()
-	initLoger()
 	//做各个部件的初始化
+	logger.Init()
 	utils.Init()
+}
+
+//GetInstanceAddr 获取服务实例的ip
+func GetInstanceAddr() (instanceIP string) {
+	//先获取ip
+	instanceIP = ""
+	cip := viper.GetStringSlice("server.cip") //config ip
+	mip, err := utils.GetNetIP()              //machine cip
+	if err != nil {
+		panic(err)
+	}
+	unuseIPList := viper.GetStringSlice("server.ignoreIP")
+	ipList := make([]string, 0) //进程所在机器的可用的ip列表
+	aIP := make([]string, 0)
+	bIP := make([]string, 0)
+	cIP := make([]string, 0)
+	lIP := make([]string, 0)
+	nIP := make([]string, 0)
+	//选用地址优先级是A>B>C>net>local
+	//A:10.0.0.0	-	10.255.255.255
+	//B:172.16.0.0 	- 	172.31.255.255
+	//C:192.168.0.0	-	192.168.255.255
+	//local:127.0.0.1
+	//net: other
+	for _, i := range mip {
+		if !utils.IsIPValid(i) {
+			continue
+		}
+		ignore := false
+		for _, ii := range unuseIPList {
+			if match, err := utils.MatchReg("^"+ii+"$", i); err == nil && match {
+				fmt.Println("match ip=",i," with ",ii)
+				ignore = true
+				continue
+			}
+		}
+		if ignore {
+			continue
+		}
+		if utils.IsLoopback(i) {
+			lIP = append(lIP, i)
+			continue
+		}
+		if yes, err := utils.IsIPAType(i); err == nil && yes {
+			aIP = append(aIP, i)
+			continue
+		}
+		if yes, err := utils.IsIPBType(i); err == nil && yes {
+			bIP = append(bIP, i)
+			continue
+		}
+		if yes, err := utils.IsIPCType(i); err == nil && yes {
+			cIP = append(cIP, i)
+			continue
+		}
+		nIP = append(nIP, i)
+	}
+	//ip优先级
+	ipList = append(ipList, aIP...)
+	ipList = append(ipList, bIP...)
+	ipList = append(ipList, cIP...)
+	ipList = append(ipList, nIP...)
+	ipList = append(ipList, lIP...)
+
+	//配置中没有配置ip优先级，则使用机器ip
+	if len(cip) == 0 {
+		if len(ipList) <= 0 {
+			panic("ip not exist ,server cant start")
+		}
+		instanceIP = ipList[0]
+		return
+	}
+
+	for _, i := range cip {
+		found := false
+		for _, j := range ipList {
+			ok, err := utils.MatchReg("^"+i+"$", j)
+			if err != nil {
+				continue
+			}
+			if ok {
+				found = true
+				break
+			}
+		}
+		if found {
+			instanceIP = i
+			break
+		}
+	}
+
+	if instanceIP == "" {
+		panic("ip not exist ,server cant start")
+	}
+	return
 }
 
 func main() {
@@ -95,11 +162,21 @@ func main() {
 		fmt.Printf("Version %v, commit %v, built at %v\n", version, commit, date)
 		os.Exit(0)
 	}
+	defer utils.DeferWhenCoreDump()
 
 	initAll()
 
 	etcdServers := viper.GetStringSlice("etcd.etcdServer")
 	instance := viper.GetString("server.listen")
+	instanceIP := GetInstanceAddr()
+	instancePort := 0
+	for i := viper.GetInt("server.minPort"); i < viper.GetInt("server.maxPort"); i++ {
+		if utils.IsPortAvailable(i) {
+			instancePort = i
+			break
+		}
+	}
+	instance = fmt.Sprintf("%s:%d", instanceIP, instancePort)
 	jaegerServers := viper.GetStringSlice("jaeger.jaegerServer")
 
 	s, err := service.Register(etcdServers, jaegerServers[0], instance)
@@ -121,19 +198,18 @@ func main() {
 		},
 	))
 
-
-	keystorePublicKey 	:= viper.GetString("keystore.public")
-	keystorePrivateKey 	:= viper.GetString("keystore.private")
+	keystorePublicKey := viper.GetString("keystore.public")
+	keystorePrivateKey := viper.GetString("keystore.private")
 	http.ListenAndServeTLS(instance,
-	    keystorePublicKey,
-	    keystorePrivateKey,
-	    http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		    if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
-		    	s.ServeHTTP(w, r)
-		    } else {
-		    	httpMux.ServeHTTP(w, r)
-		    }
-		    return
-	    }),
+		keystorePublicKey,
+		keystorePrivateKey,
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+				s.ServeHTTP(w, r)
+			} else {
+				httpMux.ServeHTTP(w, r)
+			}
+			return
+		}),
 	)
 }

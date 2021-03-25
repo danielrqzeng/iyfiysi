@@ -1,0 +1,170 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+// 获取机器网络基本信息
+
+package {{.PackageName}}
+
+import (
+	"fmt"
+	"math/big"
+	"net"
+)
+
+//IsIPValid 是否ip是合法的
+func IsIPValid(ipStr string) (yes bool) {
+	yes = false
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return
+	}
+	yes = true
+	return
+}
+
+// GetInet 获取该进程所在机器的所有ip
+// 返回结果类似为：
+// inets = {
+//	"127.0.0.1/8",
+//	"172.30.0.14/20",
+// }
+func GetInet() (inets []string, err error) {
+	inets = make([]string, 0)
+
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, i := range interfaces {
+		byName, err := net.InterfaceByName(i.Name)
+		if err != nil {
+			return nil, err
+		}
+		addresses, err := byName.Addrs()
+		for _, v := range addresses {
+			inets = append(inets, v.String())
+		}
+	}
+	return inets, nil
+}
+
+// GetNetIP 获取该进程所在机器的所有ip
+// 返回结果类似为：
+// inets = {
+//	"127.0.0.1",
+//	"172.30.0.14",
+// }
+func GetNetIP() (ip []string, err error) {
+	ip = make([]string, 0)
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return
+	}
+	for _, addr := range addrs {
+		ipAddr, ok := addr.(*net.IPNet)
+		if !ok {
+			continue
+		}
+		if ipAddr.IP.IsLoopback() {
+			continue
+		}
+		if !ipAddr.IP.IsGlobalUnicast() {
+			continue
+		}
+		ip = append(ip, ipAddr.IP.String())
+	}
+	return
+}
+
+// IsPortAvailable 是否端口是可用的（可以listen）
+func IsPortAvailable(port int) (available bool) {
+	available = false
+	address := fmt.Sprintf("%s:%d", "0.0.0.0", port)
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		return
+	}
+	defer listener.Close()
+	available = true
+	return
+}
+
+// IsGateway 是否ip是一个网关(比如192.168.0.1)
+func IsGateway(ip string) (yes bool) {
+	yes = false
+	result := net.ParseIP(ip)
+	if result.IsGlobalUnicast() {
+		yes = true
+		return
+	}
+	return
+}
+
+// IsLoopback 是否ip是一个回路ip（127.0.0.1)
+func IsLoopback(ip string) (yes bool) {
+	yes = false
+	result := net.ParseIP(ip)
+	if result.IsLoopback() {
+		yes = true
+		return
+	}
+	return
+}
+
+// IPStr2Int 将ip字符串样式转换为int值
+// e.g. 10.0.0.100=>167772260
+func IPStr2Int(ipStr string) (ipInt int64, err error) {
+	result := net.ParseIP(ipStr)
+	if result == nil {
+		err = fmt.Errorf("%s is not a valid ip", ipStr)
+		return
+	}
+	ret := big.NewInt(0)
+	ret.SetBytes(result.To4())
+	ipInt = ret.Int64()
+	return
+}
+
+func ipInRange(ip string, rangeMin, rangeMax int64) (yes bool, err error) {
+	yes = false
+	ipInt, err := IPStr2Int(ip)
+	if err != nil {
+		return
+	}
+	fmt.Println(ip,ipInt,rangeMin,rangeMax)
+	if ipInt >= rangeMin && ipInt <= rangeMax {
+		yes = true
+	}
+	return
+}
+
+//选用地址优先级是A>B>C>local>net
+//A:10.0.0.0	-	10.255.255.255
+//B:172.16.0.0 	- 	172.31.255.255
+//C:192.168.0.0	-	192.168.255.255
+//local:127.0.0.1
+//net: other
+
+//IsIPAType 是否ip是a类的ip，10.0.0.0-10.255.255.255
+func IsIPAType(ip string) (yes bool, err error) {
+	const min = 10 << 24
+	const max = 10<<24 + 255<<16 + 255<<8 + 255
+	yes, err = ipInRange(ip, min, max)
+	return
+}
+
+//IsIPBType 是否ip是b类的ip，172.16.0.0 	- 	172.31.255.255
+func IsIPBType(ip string) (yes bool, err error) {
+	const min = 172<<24 + 16<<16
+	const max = 172<<24 + 31<<16 + 255<<8 + 255
+	yes, err = ipInRange(ip, min, max)
+	return
+}
+
+//IsIPCType 是否ip是c类的ip，192.168.0.0	-	192.168.255.255
+func IsIPCType(ip string) (yes bool, err error) {
+	const min = 192<<24 + 168<<16
+	const max = 192<<24 + 168<<16 + 255<<8 + 255
+	yes, err = ipInRange(ip, min, max)
+	return
+}

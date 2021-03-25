@@ -1,0 +1,47 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+// 初始化logger
+package {{.PackageName}}
+
+import (
+	"github.com/spf13/viper"
+	"go.uber.org/zap/zapcore"
+)
+
+// Init 初始化，程序启动时候调用
+func Init() {
+	type LoggerConfigType struct {
+		Name  string
+		File  string
+		Level string
+	}
+	var loggerConfigs []LoggerConfigType
+	err := viper.UnmarshalKey("logger", &loggerConfigs)
+	if err != nil {
+		panic("Unable to unmarshal logger from config")
+	}
+	desc2level := map[string]zapcore.Level{
+		"debug":   zapcore.DebugLevel,
+		"info":    zapcore.InfoLevel,
+		"warning": zapcore.WarnLevel,
+		"error":   zapcore.ErrorLevel,
+	}
+
+	for _, lc := range loggerConfigs {
+		if _, ok := desc2level[lc.Level]; !ok {
+			panic("logger config err,unknow logger level=" + lc.Level + " for logger=" + lc.Name)
+		}
+		InitOneLogger(lc.Name, lc.File, desc2level[lc.Level])
+	}
+}
+
+// OnConfigChange 配置变更的通知
+func OnConfigChange(){
+
+}
+
+
+// OnShutDown 服务被终止的通知
+func OnShutDown(){
+
+}

@@ -1,0 +1,82 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+// 这是一个针对文件&目录的操作的包装
+package {{.PackageName}}
+
+import (
+	"io/ioutil"
+	"os"
+)
+
+// Exists 是否文件或者目录是否存在
+func Exists(targetPath string) (bool, error) {
+	_, err := os.Stat(targetPath)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+// Mkdir 创建目录
+func Mkdir(targetPath string) (err error) {
+	exist, err := Exists(targetPath)
+	if err != nil {
+		return
+	}
+	if !exist {
+		err = os.MkdirAll(targetPath, os.ModePerm)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+// GetCurrPath 获取运行程序的当前路径
+func GetCurrPath() (currPath string) {
+	currPath, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
+// GetGoPath 获取GOPATH的路径
+func GetGoPath() (goPath string) {
+	goPath, ok := os.LookupEnv("GOPATH")
+	if !ok {
+		panic("env GOPATH not found")
+	}
+	return
+}
+
+// DelPath 删除文件或者目录
+func DelPath(targetPath string) (err error) {
+	err = os.RemoveAll(targetPath)
+	return
+}
+
+// CopyFile 复制文件
+func CopyFile(srcFileName, dsrFileName string) (err error) {
+	input, err := ioutil.ReadFile(srcFileName)
+	if err != nil {
+		return
+	}
+	err = ioutil.WriteFile(dsrFileName, input, 0644)
+	if err != nil {
+		return
+	}
+	return
+}
+
+// WriteFile 写入数据到文件（使用覆盖的方式）
+func WriteFile(absFileName string, data []byte) (err error) {
+	err = ioutil.WriteFile(absFileName, data, 0644)
+	if err != nil {
+		return
+	}
+	return
+}

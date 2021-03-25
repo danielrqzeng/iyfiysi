@@ -6,7 +6,6 @@ import (
     "flag"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"go.uber.org/zap/zapcore"
 	"net/http"
     "strings"
 	"fmt"
@@ -55,36 +54,10 @@ func initConfig() {
 }
 
 
-func initLoger() {
-	type LoggerConfigType struct {
-		Name  string
-		File  string
-		Level string
-	}
-	var loggerConfigs []LoggerConfigType
-	err := viper.UnmarshalKey("logger", &loggerConfigs)
-	if err != nil {
-		panic("Unable to unmarshal logger from config")
-	}
-	desc2level := map[string]zapcore.Level{
-		"debug":   zapcore.DebugLevel,
-		"info":    zapcore.InfoLevel,
-		"warning": zapcore.WarnLevel,
-		"error":   zapcore.ErrorLevel,
-	}
-
-	for _, lc := range loggerConfigs {
-		if _, ok := desc2level[lc.Level]; !ok {
-			panic("logger config err,unknow logger level=" + lc.Level + " for logger=" + lc.Name)
-		}
-		logger.InitOneLogger(lc.Name, lc.File, desc2level[lc.Level])
-	}
-}
-
 func initAll() {
 	initConfig()
-	initLoger()
 	//做各个部件的初始化
+	logger.Init()
 	utils.Init()
 }
 

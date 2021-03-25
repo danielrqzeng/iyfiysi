@@ -1,10 +1,11 @@
 // gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
 
-
 package {{.PackageName}}
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
@@ -12,6 +13,8 @@ import (
 	"fmt"
 	"github.com/bwmarrin/snowflake"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc/credentials"
+	"io/ioutil"
 	"math/rand"
 	"reflect"
 	"regexp"
@@ -22,12 +25,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
-	"io/ioutil"
-	"crypto/tls"
-    "crypto/x509"
-    "google.golang.org/grpc/credentials"
 
-    "{{.Domain}}/{{.AppName}}/internal/pkg/logger"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
 )
 
 var gSnowflake *snowflake.Node
@@ -267,7 +266,7 @@ func JsonStr2Map(jsonStr string) (m map[string]interface{}, err error) {
 }
 
 func UUID() (id int64) {
-	if gSnowflake==nil{
+	if gSnowflake == nil {
 		nodeId := viper.GetInt64("snowflakeNodeID")
 		gSnowflake, _ = snowflake.NewNode(nodeId)
 	}
@@ -342,7 +341,6 @@ func Shuffle(data []string) {
 		data[i], data[j] = data[j], data[i]
 	}
 }
-
 
 func GetBetweenStr(str, start, end string) string {
 	s := strings.Index(str, start)
@@ -520,28 +518,33 @@ func DeferWhenCoreDump() {
 	}
 }
 
-func GenCredentials(caFile,pemFile,keyFile,serverName string) (serverCreds,clientCreds credentials.TransportCredentials,err error){
-    cert,_:=tls.LoadX509KeyPair(pemFile,keyFile)
-    certPool := x509.NewCertPool()
-    ca, err := ioutil.ReadFile(caFile)
-    if err != nil{
-        return
-    }
-    certPool.AppendCertsFromPEM(ca)
+func GenCredentials(caFile, pemFile, keyFile, serverName string) (serverCreds, clientCreds credentials.TransportCredentials, err error) {
+	cert, _ := tls.LoadX509KeyPair(pemFile, keyFile)
+	certPool := x509.NewCertPool()
+	ca, err := ioutil.ReadFile(caFile)
+	if err != nil {
+		return
+	}
+	certPool.AppendCertsFromPEM(ca)
 
-    //服务端
-    serverCreds =credentials.NewTLS(&tls.Config{
-        Certificates: []tls.Certificate{cert},//服务端证书
-        ServerName:   serverName,
-        ClientCAs:    certPool,
-    })
+	//服务端
+	serverCreds = credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{cert}, //服务端证书
+		ServerName:   serverName,
+		ClientCAs:    certPool,
+	})
 
-    //客户端
-    clientCreds = credentials.NewTLS(&tls.Config{
-      	Certificates: []tls.Certificate{cert},
-      	ServerName:   serverName,
-      	RootCAs:      certPool,
-      	InsecureSkipVerify: true, //@TODO 此处是否不检查？
-     })
-     return
+	//客户端
+	clientCreds = credentials.NewTLS(&tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		ServerName:         serverName,
+		RootCAs:            certPool,
+		InsecureSkipVerify: true, //@TODO 此处是否不检查？
+	})
+	return
+}
+
+func MatchReg(regStr, targetStr string) (match bool, err error) {
+	match, err = regexp.Match(regStr, []byte(targetStr))
+	return
 }

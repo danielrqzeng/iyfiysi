@@ -72,6 +72,38 @@ templates:
     dst: "internal/pkg/utils/util.go"
     params:
       PackageName: "utils"
+  - id: "utils_util_test"
+    flag: 5
+    name: "util_init_test"
+    desc: "公共类初始化"
+    src: "util_util_test.go.tmpl"
+    dst: "internal/pkg/utils/util_test.go"
+    params:
+      PackageName: "utils"
+  - id: "utils_fs"
+    flag: 5
+    name: "util_fs"
+    desc: "文件操作"
+    src: "util_fs.go.tmpl"
+    dst: "internal/pkg/utils/fs.go"
+    params:
+      PackageName: "utils"
+  - id: "util_net"
+    flag: 5
+    name: "util_net"
+    desc: "公共类初始化"
+    src: "util_net.go.tmpl"
+    dst: "internal/pkg/utils/net.go"
+    params:
+      PackageName: "utils"
+  - id: "util_net_test"
+    flag: 5
+    name: "util_net_test"
+    desc: "net相关的工具类"
+    src: "util_net_test.go.tmpl"
+    dst: "internal/pkg/utils/net_test.go"
+    params:
+      PackageName: "utils"
   - id: "etcdv3"
     flag: 5
     name: "etcdv3"
@@ -80,12 +112,28 @@ templates:
     dst: "internal/pkg/db/etcdv3.go"
     params:
       PackageName: "db"
-  - id: "jaeger"
+  - id: "etcdv3"
     flag: 5
     name: "etcdv3"
+    desc: "etcd v3的初始化"
+    src: "model_init.go.tmpl"
+    dst: "internal/pkg/db/init.go"
+    params:
+      PackageName: "db"
+  - id: "jaeger"
+    flag: 5
+    name: "jaeger"
     desc: "链路追踪的封装"
     src: "jaeger.go.tmpl"
     dst: "internal/pkg/jaeger/jaeger.go"
+    params:
+      PackageName: "jaeger"
+  - id: "jaeger"
+    flag: 5
+    name: "jaeger"
+    desc: "链路追踪的初始化"
+    src: "model_init.go.tmpl"
+    dst: "internal/pkg/jaeger/init.go"
     params:
       PackageName: "jaeger"
   - id: "logger"
@@ -96,12 +144,28 @@ templates:
     dst: "internal/pkg/logger/logger.go"
     params:
       PackageName: "logger"
+  - id: "logger"
+    flag: 5
+    name: "logger"
+    desc: "日志的初始化"
+    src: "logger_init.go.tmpl"
+    dst: "internal/pkg/logger/init.go"
+    params:
+      PackageName: "logger"
   - id: "interceptor"
     flag: 5
     name: "interceptor"
     desc: "拦截器"
     src: "interceptor.go.tmpl"
     dst: "internal/pkg/interceptor/interceptor.go"
+    params:
+      PackageName: "interceptor"
+  - id: "interceptor"
+    flag: 5
+    name: "interceptor"
+    desc: "拦截器的初始化"
+    src: "model_init.go.tmpl"
+    dst: "internal/pkg/interceptor/init.go"
     params:
       PackageName: "interceptor"
   - id: "proto_google_api_annotations.proto"

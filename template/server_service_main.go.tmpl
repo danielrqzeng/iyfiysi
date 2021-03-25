@@ -36,7 +36,7 @@ func Register(etcdAddrs []string, jeagerReporterUrl, instance string) (server *g
             //grpc_recovery.UnaryServerInterceptor(),
         )))
 
-    err = DoRegister(server)
+    err = DoRegister(server,instance)
 	if err != nil{
 		return
 	}

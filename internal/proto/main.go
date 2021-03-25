@@ -149,9 +149,9 @@ func DoParse() {
 		glog.Fatal(err)
 	}
 
-	glog.V(1).Info("Parsed code generator request")
+	//glog.V(1).Info("Parsed code generator request")
 
-	glog.Error(req.GetParameter())
+	//glog.Error(req.GetParameter())
 
 	//读取protoc传进来的参数,主要有两个,domain&app
 	domain, appName := "", ""
@@ -258,7 +258,6 @@ func DoParse() {
 		if tmpl.Flag&comm.TemplateConfigFlagProtoc == 0 {
 			continue
 		}
-		glog.Error("id=" + tmpl.ID)
 		//服务发现
 		if tmpl.ID == "protoc_discovery" {
 			//整合三个地方的变量
@@ -295,7 +294,7 @@ func DoParse() {
 				Name:    proto.String(fname),
 				Content: proto.String(buffStr),
 			})
-			glog.Error("to output to =" + tmpl.Dst)
+			//glog.Error("to output to =" + tmpl.Dst)
 
 			data, err := proto.Marshal(response)
 			if err != nil {
@@ -333,7 +332,6 @@ func DoParse() {
 				glog.Error(err, "failed to get template="+tmpl.Src)
 				return
 			}
-			glog.Error(params)
 			buffStr, err := DoTmpl(tmplStr, params)
 
 			response := new(plugin.CodeGeneratorResponse)
@@ -342,7 +340,6 @@ func DoParse() {
 				Name:    proto.String(fname),
 				Content: proto.String(buffStr),
 			})
-			glog.Error("to output to =" + tmpl.Dst)
 
 			data, err := proto.Marshal(response)
 			if err != nil {
@@ -382,7 +379,6 @@ func DoParse() {
 					params[k] = v
 				}
 				buffStr, err := DoTmpl(tmplStr, params)
-				glog.Error(params)
 
 				response := new(plugin.CodeGeneratorResponse)
 				baseName := fmt.Sprintf("%s_%s.go", strcase.ToSnake(rpc.ServiceName), strcase.ToSnake(rpc.MethodName))
@@ -391,7 +387,6 @@ func DoParse() {
 					Name:    proto.String(fname),
 					Content: proto.String(buffStr),
 				})
-				glog.Error("to output to =" + tmpl.Dst)
 
 				data, err := proto.Marshal(response)
 				if err != nil {
