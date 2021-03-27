@@ -4,21 +4,19 @@
 package {{.PackageName}}
 
 import (
-    "context"
-    //"crypto/tls"
-    "github.com/grpc-ecosystem/go-grpc-prometheus"
-    "github.com/grpc-ecosystem/grpc-gateway/runtime"
-    "github.com/opentracing/opentracing-go"
-    "github.com/spf13/viper"
-    "github.com/coreos/etcd/clientv3"
-    etcdnaming "github.com/coreos/etcd/clientv3/naming"
-    "google.golang.org/grpc"
-    //"google.golang.org/grpc/credentials"
-    "github.com/grpc-ecosystem/go-grpc-middleware"
-    "time"
+	"time"
+	"context"
 
-    "{{.Domain}}/{{.AppName}}/internal/pkg/jaeger"
-    "{{.Domain}}/{{.AppName}}/internal/pkg/utils"
+	"github.com/coreos/etcd/clientv3"
+	etcdNaming "github.com/coreos/etcd/clientv3/naming"
+	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+
+	"{{.Domain}}/{{.AppName}}/internal/pkg/interceptor"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/jaeger"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
 )
 
 func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jaegerAddrs string) (err error) {
@@ -40,7 +38,7 @@ func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jaegerAddrs string) 
         panic(err)
     }
     //defer cli.Close()
-    r := &etcdnaming.GRPCResolver{Client: cli}
+    r := &etcdNaming.GRPCResolver{Client: cli}
     lbOption := grpc.WithBalancer(grpc.RoundRobin(r))
 
     //--------------ssl证书option----------------------
@@ -54,28 +52,9 @@ func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jaegerAddrs string) 
     }
     sslOption := grpc.WithTransportCredentials(clientCred)
 
-/*
-	publicFile 	:= viper.GetString("keystore.public")
-    c, tlsErr := credentials.NewClientTLSFromFile(publicFile, "{{.AppName}}")
-    if tlsErr != nil {
-        panic(tlsErr)
-    }
-
-    opts := []grpc.DialOption{grpc.WithTransportCredentials(c)}
-    skipcacheck := grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
-        // given the grpc-gateway is always connecting to localhost, does
-        // InsecureSkipVerify=true cause any security issues?
-        InsecureSkipVerify: true,
-    }))
-    opts = append(opts, skipcacheck) //无ca
-    */
-
-
     //--------------拦截器option----------------------
-    interceptorOption := grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(
-        jaeger.GatewayTracerClientInterceptor(opentracing.GlobalTracer()),
-        grpc_prometheus.UnaryClientInterceptor,
-    ))
+	interceptors := interceptor.GetGatewayInterceptors()
+	interceptorOption := grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(interceptors))
 
 
     //所有选项

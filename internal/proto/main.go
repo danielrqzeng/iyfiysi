@@ -20,6 +20,7 @@ import (
 	"iyfiysi/internal/comm"
 	"iyfiysi/util"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -252,7 +253,6 @@ func DoParse() {
 		glog.Error("failed to Unmarshal config,err=" + aurora.Red(err.Error()).String())
 		return
 	}
-	glog.Error("mark1")
 	for _, tmpl := range tmplList {
 		//此配置不是给protoc_iyfiysi_out使用的,跳过
 		if tmpl.Flag&comm.TemplateConfigFlagProtoc == 0 {
@@ -285,11 +285,10 @@ func DoParse() {
 				glog.Error(err, "failed to get template="+tmpl.Src)
 				return
 			}
-			glog.Error(params)
 			buffStr, err := DoTmpl(tmplStr, params)
 
 			response := new(plugin.CodeGeneratorResponse)
-			fname := tmpl.Dst
+			fname := filepath.FromSlash(tmpl.Dst)
 			response.File = append(response.File, &plugin.CodeGeneratorResponse_File{
 				Name:    proto.String(fname),
 				Content: proto.String(buffStr),
@@ -304,6 +303,7 @@ func DoParse() {
 			if err != nil {
 				glog.Error(err, "failed to write output proto")
 			}
+			glog.Error("protoc-gen-iyfiysi generated success,file=" + aurora.Green(fname).String())
 		}
 		//服务注册
 		if tmpl.ID == "protoc_register" {
@@ -335,7 +335,7 @@ func DoParse() {
 			buffStr, err := DoTmpl(tmplStr, params)
 
 			response := new(plugin.CodeGeneratorResponse)
-			fname := tmpl.Dst
+			fname := filepath.FromSlash(tmpl.Dst)
 			response.File = append(response.File, &plugin.CodeGeneratorResponse_File{
 				Name:    proto.String(fname),
 				Content: proto.String(buffStr),
@@ -349,6 +349,7 @@ func DoParse() {
 			if err != nil {
 				glog.Error(err, "failed to write output proto")
 			}
+			glog.Error("protoc-gen-iyfiysi generated success,file=" + aurora.Green(fname).String())
 		}
 		//服务实现
 		if tmpl.ID == "protoc_impl" {
@@ -382,7 +383,12 @@ func DoParse() {
 
 				response := new(plugin.CodeGeneratorResponse)
 				baseName := fmt.Sprintf("%s_%s.go", strcase.ToSnake(rpc.ServiceName), strcase.ToSnake(rpc.MethodName))
-				fname := tmpl.Dst + "/" + baseName
+				fname := filepath.Join(filepath.FromSlash(tmpl.Dst), baseName)
+				//若是已经存在文件，则略过，以免覆盖掉用户的实现逻辑
+				if util.IsPathExist(fname) {
+					glog.Error("protoc-gen-iyfiysi skip generated,file=" + aurora.Yellow(fname).String())
+					continue
+				}
 				response.File = append(response.File, &plugin.CodeGeneratorResponse_File{
 					Name:    proto.String(fname),
 					Content: proto.String(buffStr),
@@ -396,6 +402,7 @@ func DoParse() {
 				if err != nil {
 					glog.Error(err, "failed to write output proto")
 				}
+				glog.Error("protoc-gen-iyfiysi generated success,file=" + aurora.Green(fname).String())
 			}
 
 		}

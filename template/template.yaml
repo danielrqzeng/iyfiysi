@@ -168,6 +168,14 @@ templates:
     dst: "internal/pkg/interceptor/init.go"
     params:
       PackageName: "interceptor"
+  - id: "interceptor_mgr"
+    flag: 5
+    name: "interceptor_mgr"
+    desc: "拦截器的管理实例"
+    src: "interceptor_mgr.go.tmpl"
+    dst: "internal/pkg/interceptor/mgr.go"
+    params:
+      PackageName: "interceptor"
   - id: "proto_google_api_annotations.proto"
     flag: 5
     name: "proto_google_api_annotations.proto"

@@ -3,23 +3,11 @@
 package {{.PackageName}}
 
 import (
-    grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
-    grpcOpentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
-  	"github.com/opentracing/opentracing-go"
-    "google.golang.org/grpc"
-    //"google.golang.org/grpc/naming"
-    "github.com/grpc-ecosystem/go-grpc-middleware"
-    "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"google.golang.org/grpc"
+	"github.com/grpc-ecosystem/go-grpc-prometheus"
 
-    //"go.etcd.io/etcd/clientv3"
-    //etcdnaming "go.etcd.io/etcd/clientv3/naming"
-
-    //"github.com/coreos/etcd/clientv3"
-    //etcdnaming "github.com/coreos/etcd/clientv3/naming"
-
-
+	"{{.Domain}}/{{.AppName}}/internal/pkg/interceptor"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/jaeger"
-	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
 )
 
 func Register(etcdAddrs []string, jeagerReporterUrl, instance string) (server *grpc.Server, err error) {
@@ -27,14 +15,8 @@ func Register(etcdAddrs []string, jeagerReporterUrl, instance string) (server *g
     if err != nil {
         return
     }
-    server = grpc.NewServer(
-        grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-            //grpc_ctxtags.UnaryServerInterceptor(),
-            grpcOpentracing.UnaryServerInterceptor(grpcOpentracing.WithTracer(opentracing.GlobalTracer())),
-            grpc_zap.UnaryServerInterceptor(logger.MainLogger),
-            grpc_prometheus.UnaryServerInterceptor,
-            //grpc_recovery.UnaryServerInterceptor(),
-        )))
+	interceptors := interceptor.GetServerInterceptors()
+	server = grpc.NewServer(grpc.UnaryInterceptor(interceptors))
 
     err = DoRegister(server,instance)
 	if err != nil{

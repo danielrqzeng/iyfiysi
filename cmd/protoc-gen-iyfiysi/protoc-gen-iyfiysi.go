@@ -6,6 +6,5 @@ import (
 )
 
 func main() {
-	//proto_parse.DoParse()
 	pb.DoParse()
 }

@@ -1,0 +1,37 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+
+package {{.PackageName}}
+
+import (
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpcZap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpcOpentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+	grpcPrometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/opentracing/opentracing-go"
+	"google.golang.org/grpc"
+
+	"{{.Domain}}/{{.AppName}}/internal/pkg/jaeger"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
+)
+
+// GetGatewayInterceptors all Unary interceptors for gateway
+func GetGatewayInterceptors() (interceptors grpc.UnaryClientInterceptor) {
+	interceptors = grpcMiddleware.ChainUnaryClient(
+		grpcPrometheus.UnaryClientInterceptor, //拦截器之监控
+		jaeger.GatewayTracerClientInterceptor(opentracing.GlobalTracer()),//拦截器之链路追踪
+	)
+	return
+}
+
+// GetServerInterceptors all interceptors for gateway
+func GetServerInterceptors() (interceptors grpc.UnaryServerInterceptor) {
+	interceptors = grpcMiddleware.ChainUnaryServer(
+		grpcPrometheus.UnaryServerInterceptor,                       //拦截器之监控
+		grpcOpentracing.UnaryServerInterceptor(
+			grpcOpentracing.WithTracer(opentracing.GlobalTracer())), //拦截器之链路追踪
+		grpcZap.UnaryServerInterceptor(logger.MainLogger),           //拦截器之grpc日志
+	)
+
+	return
+}
