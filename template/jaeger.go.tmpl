@@ -20,7 +20,7 @@ import (
 	"context"
 )
 
-func InitTracer(jeagerReporterUrl, serviceName string) (err error) {
+func InitTracer(jaegerReporterUrl, serviceName string) (err error) {
 	cfg := jaegerCfg.Configuration{
 		//采样率
 		Sampler: &jaegerCfg.SamplerConfig{
@@ -31,7 +31,7 @@ func InitTracer(jeagerReporterUrl, serviceName string) (err error) {
 		Reporter: &jaegerCfg.ReporterConfig{
 			LogSpans: true,
 			//LocalAgentHostPort: "locahost:9411",
-			LocalAgentHostPort: jeagerReporterUrl,
+			LocalAgentHostPort: jaegerReporterUrl,
 			//CollectorEndpoint: "http://localhost:14268/api/traces",
 		},
 	}
@@ -44,7 +44,7 @@ func InitTracer(jeagerReporterUrl, serviceName string) (err error) {
 	)
 	_ = closer
 	if err != nil {
-		fmt.Println("tracer error ", err, ",jeagerReporterUrl=", jeagerReporterUrl)
+		fmt.Println("tracer error ", err, ",jaegerReporterUrl=", jaegerReporterUrl)
 		return
 	}
 	opentracing.SetGlobalTracer(tracer)

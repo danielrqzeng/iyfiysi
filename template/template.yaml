@@ -125,7 +125,7 @@ templates:
     name: "jaeger"
     desc: "链路追踪的封装"
     src: "jaeger.go.tmpl"
-    dst: "internal/pkg/jaeger/jaeger.go"
+    dst: "internal/pkg/trace/jaeger.go"
     params:
       PackageName: "jaeger"
   - id: "jaeger"
@@ -133,7 +133,7 @@ templates:
     name: "jaeger"
     desc: "链路追踪的初始化"
     src: "model_init.go.tmpl"
-    dst: "internal/pkg/jaeger/init.go"
+    dst: "internal/pkg/trace/init.go"
     params:
       PackageName: "jaeger"
   - id: "logger"

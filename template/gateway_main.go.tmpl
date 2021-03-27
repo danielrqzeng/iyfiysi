@@ -73,10 +73,10 @@ func main() {
 
 	etcdServers := viper.GetStringSlice("etcd.etcdServer")
 	instance := viper.GetString("gateway.listen")
-	jeagerServers := viper.GetStringSlice("jaeger.jaegerServer")
+	jaegerServers := viper.GetStringSlice("jaeger.jaegerServer")
 
 	grpcMux := runtime.NewServeMux()
-	discovery.Discovery(grpcMux,etcdServers,jeagerServers[0])
+	discovery.Discovery(grpcMux,etcdServers,jaegerServers[0])
 	httpMux := http.NewServeMux()
 	mux :=&interceptor.HttpInterceptor{grpcMux}
 	httpMux.Handle("/", mux)
