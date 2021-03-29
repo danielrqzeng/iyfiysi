@@ -26,7 +26,7 @@ func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jaegerAddrs string) 
     //defer cancel()
 
     //全局最终实例初始化
-    jaeger.InitTracer(jaegerAddrs, "{{.AppName}}")
+    trace.InitTracer(jaegerAddrs, "{{.AppName}}")
 
     
     //----------etcd的服务发现option-------------------
@@ -51,6 +51,7 @@ func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jaegerAddrs string) 
         panic(err)
     }
     sslOption := grpc.WithTransportCredentials(clientCred)
+    tokenOption := grpc.WithPerRPCCredentials(interceptor.BearerRPCCredentials())
 
     //--------------拦截器option----------------------
 	interceptors := interceptor.GetGatewayInterceptors()
@@ -61,6 +62,7 @@ func Discovery(gwmux *runtime.ServeMux, etcdAddrs []string, jaegerAddrs string) 
     var opts []grpc.DialOption
     opts = append(opts, lbOption)
     opts = append(opts, sslOption)
+    opts = append(opts, tokenOption)
     opts = append(opts,interceptorOption)
 
     err = DoDiscovery(ctx, gwmux,  opts)

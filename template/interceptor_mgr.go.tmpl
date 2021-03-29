@@ -5,21 +5,27 @@ package {{.PackageName}}
 
 import (
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpcZap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpcRecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpcRetry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpcOpentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpcPrometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 
-	"{{.Domain}}/{{.AppName}}/internal/pkg/trace"
-	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
+	"test.com/voice/internal/pkg/logger"
+	"test.com/voice/internal/pkg/trace"
 )
 
 // GetGatewayInterceptors all Unary interceptors for gateway
 func GetGatewayInterceptors() (interceptors grpc.UnaryClientInterceptor) {
 	interceptors = grpcMiddleware.ChainUnaryClient(
-		grpcPrometheus.UnaryClientInterceptor, //拦截器之监控
-		jaeger.GatewayTracerClientInterceptor(opentracing.GlobalTracer()),//拦截器之链路追踪
+		trace.GatewayTracerClientInterceptor(opentracing.GlobalTracer()), //拦截器之链路追踪
+		grpcZap.UnaryClientInterceptor(logger.GrpcLogger),                 //拦截器之日志
+		grpcPrometheus.UnaryClientInterceptor,                             //拦截器之监控
+		grpcRetry.UnaryClientInterceptor(),                                //拦截器之重试
+		ClientLimiterInterceptor(),                                        //限流
 	)
 	return
 }
@@ -27,10 +33,12 @@ func GetGatewayInterceptors() (interceptors grpc.UnaryClientInterceptor) {
 // GetServerInterceptors all interceptors for gateway
 func GetServerInterceptors() (interceptors grpc.UnaryServerInterceptor) {
 	interceptors = grpcMiddleware.ChainUnaryServer(
-		grpcPrometheus.UnaryServerInterceptor,                       //拦截器之监控
 		grpcOpentracing.UnaryServerInterceptor(
 			grpcOpentracing.WithTracer(opentracing.GlobalTracer())), //拦截器之链路追踪
-		grpcZap.UnaryServerInterceptor(logger.MainLogger),           //拦截器之grpc日志
+		grpcPrometheus.UnaryServerInterceptor,                       //拦截器之监控
+		grpcZap.UnaryServerInterceptor(logger.GrpcLogger),           //拦截器之grpc日志
+		grpcAuth.UnaryServerInterceptor(BearerAuthInterceptor),      //拦截器之认证
+		grpcRecovery.UnaryServerInterceptor(),                       //拦截器之恢复
 	)
 
 	return

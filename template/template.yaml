@@ -127,15 +127,15 @@ templates:
     src: "jaeger.go.tmpl"
     dst: "internal/pkg/trace/jaeger.go"
     params:
-      PackageName: "jaeger"
-  - id: "jaeger"
+      PackageName: "trace"
+  - id: "trace_init"
     flag: 5
-    name: "jaeger"
+    name: "trace init"
     desc: "链路追踪的初始化"
     src: "model_init.go.tmpl"
     dst: "internal/pkg/trace/init.go"
     params:
-      PackageName: "jaeger"
+      PackageName: "trace"
   - id: "logger"
     flag: 5
     name: "logger"
@@ -152,6 +152,14 @@ templates:
     dst: "internal/pkg/logger/init.go"
     params:
       PackageName: "logger"
+  - id: "governance"
+    flag: 5
+    name: "governance"
+    desc: "服务治理"
+    src: "model_init.go.tmpl"
+    dst: "internal/pkg/governance/init.go"
+    params:
+      PackageName: "governance"
   - id: "interceptor"
     flag: 5
     name: "interceptor"
@@ -174,6 +182,22 @@ templates:
     desc: "拦截器的管理实例"
     src: "interceptor_mgr.go.tmpl"
     dst: "internal/pkg/interceptor/mgr.go"
+    params:
+      PackageName: "interceptor"
+  - id: "interceptor_auth"
+    flag: 5
+    name: "interceptor_auth"
+    desc: "拦截器的认证实例"
+    src: "intercepotor_auth.go.tmpl"
+    dst: "internal/pkg/interceptor/auth.go"
+    params:
+      PackageName: "interceptor"
+  - id: "interceptor_limiter"
+    flag: 5
+    name: "interceptor_limiter"
+    desc: "拦截器的限流器"
+    src: "intercepotor_limiter.go.tmpl"
+    dst: "internal/pkg/interceptor/limiter.go"
     params:
       PackageName: "interceptor"
   - id: "proto_google_api_annotations.proto"

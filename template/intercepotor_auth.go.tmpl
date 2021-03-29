@@ -1,0 +1,60 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+package {{.PackageName}}
+
+//以authorization为头部，形式为`bearer token`的Token进行验证
+import (
+	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"github.com/spf13/viper"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+const headerAuthorize = "authorization" // 为了和grpc_auth.AuthFromMD中的header对应
+const BearerScheme = "bearer"
+
+//TokenAuth token认证，即限制必须有token的人才可以调用服务
+type TokenAuth struct {
+	Token string
+}
+
+//GetRequestMetadata 获取认证信息
+func (t *TokenAuth) GetRequestMetadata(
+	ctx context.Context, in ...string) (map[string]string, error) {
+	return map[string]string{
+		headerAuthorize: t.Token,
+	}, nil
+}
+
+// RequireTransportSecurity 是否需要安全的模式传输这个认证的token，若是需要必须得开启TLS传输
+func (t *TokenAuth) RequireTransportSecurity() bool {
+	return true
+}
+
+// BearerRPCCredentials bearer的认证方式，在客户端使用
+func BearerRPCCredentials() (tokenAuth *TokenAuth) {
+	token := viper.GetString("token")
+	tokenAuth = &TokenAuth{
+		Token: BearerScheme + " " + token,
+	}
+	return
+}
+
+//BearerAuthInterceptor 服务端的认证逻辑
+func BearerAuthInterceptor(ctx context.Context) (newCtx context.Context, err error) {
+	token, err := grpcAuth.AuthFromMD(ctx, BearerScheme)
+	if err != nil {
+		return nil, err
+	}
+
+	//此处做一个简单的认证就是了
+	confToken := viper.GetString("token")
+	if token != confToken {
+		return nil,
+			status.Errorf(codes.Unauthenticated, "invalid auth token: %s", err)
+	}
+
+	newCtx = ctx
+	return
+}

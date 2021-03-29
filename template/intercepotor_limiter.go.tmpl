@@ -1,0 +1,62 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+package {{.PackageName}}
+
+import (
+	"github.com/platinummonkey/go-concurrency-limits/core"
+	gclGrpc "github.com/platinummonkey/go-concurrency-limits/grpc"
+	"github.com/platinummonkey/go-concurrency-limits/limit"
+	"github.com/platinummonkey/go-concurrency-limits/limiter"
+	"github.com/platinummonkey/go-concurrency-limits/strategy"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+)
+
+// GetLimiter 获取限流器实例
+func GetLimiter() (limiterInstance core.Limiter, err error) {
+	limitNum := viper.GetInt("limit") //最多允许并发
+	noLogger := limit.NoopLimitLogger{}
+	//vegas限流原理：https://fredal.xin/netflix-concuurency-limits
+	limitInstance := limit.NewDefaultVegasLimit("limiter", noLogger, nil)
+	limiterInstance, err = limiter.NewDefaultLimiter(
+		limitInstance,
+		1,
+		1000,
+		1e6,
+		100,
+		strategy.NewSimpleStrategy(limitNum),
+		noLogger,
+		nil)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func ServerLimiterInterceptor() (interceptor grpc.UnaryServerInterceptor) {
+	limiterInstance, err := GetLimiter()
+	if err != nil {
+		panic(err)
+	}
+
+	interceptor = gclGrpc.UnaryServerInterceptor(
+		gclGrpc.WithName("grpc-unary-server"),
+		gclGrpc.WithLimiter(limiterInstance),
+		//gclGrpc.WithServerResponseTypeClassifier(),
+	)
+	return
+}
+
+func ClientLimiterInterceptor() (interceptor grpc.UnaryClientInterceptor) {
+	limiterInstance, err := GetLimiter()
+	if err != nil {
+		panic(err)
+	}
+
+	interceptor = gclGrpc.UnaryClientInterceptor(
+		gclGrpc.WithName("grpc-unary-server"),
+		gclGrpc.WithLimiter(limiterInstance),
+		//gclGrpc.WithServerResponseTypeClassifier(),
+	)
+	return
+}

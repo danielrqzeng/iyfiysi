@@ -64,7 +64,7 @@ func initAll() {
 func GetInstanceAddr() (instanceIP string) {
 	//先获取ip
 	instanceIP = ""
-	cip := viper.GetStringSlice("server.cip") //config ip
+	cip := viper.GetStringSlice("server.ip") //config ip
 	mip, err := utils.GetNetIP()              //machine cip
 	if err != nil {
 		panic(err)

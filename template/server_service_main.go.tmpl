@@ -11,7 +11,7 @@ import (
 )
 
 func Register(etcdAddrs []string, jaegerReporterUrl, instance string) (server *grpc.Server, err error) {
-    err = jaeger.InitTracer(jaegerReporterUrl, "{{.AppName}}")
+    err = trace.InitTracer(jaegerReporterUrl, "{{.AppName}}")
     if err != nil {
         return
     }
