@@ -107,14 +107,6 @@ templates:
   - id: "etcdv3"
     flag: 5
     name: "etcdv3"
-    desc: "etcd v3的sdk封装"
-    src: "etcdv3.go.tmpl"
-    dst: "internal/pkg/db/etcdv3.go"
-    params:
-      PackageName: "db"
-  - id: "etcdv3"
-    flag: 5
-    name: "etcdv3"
     desc: "etcd v3的初始化"
     src: "model_init.go.tmpl"
     dst: "internal/pkg/db/init.go"
@@ -158,6 +150,14 @@ templates:
     desc: "服务治理"
     src: "model_init.go.tmpl"
     dst: "internal/pkg/governance/init.go"
+    params:
+      PackageName: "governance"
+  - id: "etcdv3"
+    flag: 5
+    name: "etcdv3"
+    desc: "etcd v3的sdk封装"
+    src: "etcdv3.go.tmpl"
+    dst: "internal/pkg/governance/etcdv3.go"
     params:
       PackageName: "governance"
   - id: "interceptor"
