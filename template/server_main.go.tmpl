@@ -5,7 +5,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -18,10 +17,14 @@ import (
 	"{{.Domain}}/{{.AppName}}/internal/app/server/service"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/conf"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/governance"
 )
 
 //定义一个全局变量的命令行接收参数
 var (
+    etcdServerFlag = flag.String("etcd", "http://127.0.0.1:2379", `etcd server,split with "," if more than one etcd server`)
+	confKeyFlag    = flag.String("conf_key", "/{{.AppName}}/config/app.yaml", `etcd conf key`)
 	confFlag    = flag.String("conf", "./conf/app.yaml", "configuration file")
 	versionFlag = flag.Bool("version", false, "print the current version")
 )
@@ -33,126 +36,20 @@ var (
 	date    = "unknown"
 )
 
-func initConfig() {
-	//**********conf/app.yaml**********
-	confFile := *confFlag
-	if !strings.HasSuffix(confFile, ".yaml") {
-		panic(fmt.Errorf("config file=%s is not yaml type,pls use the right type", confFile))
-	}
-
-	viper.SetConfigFile(confFile)
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
-	}
-
-	//配置变化
-	viper.WatchConfig() //监听配置变化
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		logger.MainLogger.Error("config=" + e.Name + " change")
-	})
-}
-
 func initAll() {
-	initConfig()
-	//做各个部件的初始化
-	logger.Init()
-	utils.Init()
-}
-
-//GetInstanceAddr 获取服务实例的ip
-func GetInstanceAddr() (instanceIP string) {
-	//先获取ip
-	instanceIP = ""
-	cip := viper.GetStringSlice("server.ip") //config ip
-	mip, err := utils.GetNetIP()              //machine cip
+	conf.Init()
+	err := conf.InitRemoteConfig(
+		strings.Split(*etcdServerFlag, ","),
+		*confKeyFlag,
+		func() {
+			fmt.Println(viper.GetString("version"))
+		})
 	if err != nil {
 		panic(err)
 	}
-	unuseIPList := viper.GetStringSlice("server.ignoreIP")
-	ipList := make([]string, 0) //进程所在机器的可用的ip列表
-	aIP := make([]string, 0)
-	bIP := make([]string, 0)
-	cIP := make([]string, 0)
-	lIP := make([]string, 0)
-	nIP := make([]string, 0)
-	//选用地址优先级是A>B>C>net>local
-	//A:10.0.0.0	-	10.255.255.255
-	//B:172.16.0.0 	- 	172.31.255.255
-	//C:192.168.0.0	-	192.168.255.255
-	//local:127.0.0.1
-	//net: other
-	for _, i := range mip {
-		if !utils.IsIPValid(i) {
-			continue
-		}
-		ignore := false
-		for _, ii := range unuseIPList {
-			if match, err := utils.MatchReg("^"+ii+"$", i); err == nil && match {
-				fmt.Println("match ip=",i," with ",ii)
-				ignore = true
-				continue
-			}
-		}
-		if ignore {
-			continue
-		}
-		if utils.IsLoopback(i) {
-			lIP = append(lIP, i)
-			continue
-		}
-		if yes, err := utils.IsIPAType(i); err == nil && yes {
-			aIP = append(aIP, i)
-			continue
-		}
-		if yes, err := utils.IsIPBType(i); err == nil && yes {
-			bIP = append(bIP, i)
-			continue
-		}
-		if yes, err := utils.IsIPCType(i); err == nil && yes {
-			cIP = append(cIP, i)
-			continue
-		}
-		nIP = append(nIP, i)
-	}
-	//ip优先级
-	ipList = append(ipList, aIP...)
-	ipList = append(ipList, bIP...)
-	ipList = append(ipList, cIP...)
-	ipList = append(ipList, nIP...)
-	ipList = append(ipList, lIP...)
-
-	//配置中没有配置ip优先级，则使用机器ip
-	if len(cip) == 0 {
-		if len(ipList) <= 0 {
-			panic("ip not exist ,server cant start")
-		}
-		instanceIP = ipList[0]
-		return
-	}
-
-	for _, i := range cip {
-		found := false
-		for _, j := range ipList {
-			ok, err := utils.MatchReg("^"+i+"$", j)
-			if err != nil {
-				continue
-			}
-			if ok {
-				found = true
-				break
-			}
-		}
-		if found {
-			instanceIP = i
-			break
-		}
-	}
-
-	if instanceIP == "" {
-		panic("ip not exist ,server cant start")
-	}
-	return
+	//做各个部件的初始化
+	logger.Init()
+	utils.Init()
 }
 
 func main() {
@@ -167,8 +64,7 @@ func main() {
 	initAll()
 
 	etcdServers := viper.GetStringSlice("etcd.etcdServer")
-	instance := viper.GetString("server.listen")
-	instanceIP := GetInstanceAddr()
+	instanceIP := governance.GetServiceInstanceAddr()
 	instancePort := 0
 	for i := viper.GetInt("server.minPort"); i < viper.GetInt("server.maxPort"); i++ {
 		if utils.IsPortAvailable(i) {
@@ -176,7 +72,7 @@ func main() {
 			break
 		}
 	}
-	instance = fmt.Sprintf("%s:%d", instanceIP, instancePort)
+	instance := fmt.Sprintf("%s:%d", instanceIP, instancePort)
 	jaegerServers := viper.GetStringSlice("jaeger.jaegerServer")
 
 	s, err := service.Register(etcdServers, jaegerServers[0], instance)

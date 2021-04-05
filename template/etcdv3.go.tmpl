@@ -281,3 +281,33 @@ func (e *EtcdType) RunToWatchPrefix(
 	go e.watch()
 	return
 }
+
+//Put 设置值
+func (e *EtcdType) Put(cli *clientv3.Client, key, val string) (err error) {
+	e.init()
+	e.cli = cli
+	e.key = key
+	err = e.put(key, val)
+	return
+}
+
+
+//Get 获取某个值，精准命中此值即返回，否则报错
+func (e *EtcdType) Get(cli *clientv3.Client, key string) (val string, err error) {
+	e.init()
+	e.cli = cli
+	e.key = key
+	kvs, err := e.get(key)
+	if err != nil {
+		return
+	}
+	if len(kvs) != 1 {
+		err = fmt.Errorf("len(val)=%d found for key=%s", len(kvs), key)
+		return
+	}
+	for _, v := range kvs {
+		val = v
+	}
+	return
+}
+

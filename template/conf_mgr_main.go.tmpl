@@ -1,0 +1,112 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+// 这是一个针对文件&目录的操作的包装
+package {{.PackageName}}
+
+import (
+	"fmt"
+	"github.com/coreos/etcd/clientv3"
+	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/viper"
+	"strings"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/governance"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
+	"time"
+)
+
+// InitConfig 从本地文件confFile中初始化配置
+func InitConfig(confFile string, onConfigChange func()) {
+	//**********default conf/app.yaml**********
+	if !strings.HasSuffix(confFile, ".yaml") {
+		panic(fmt.Errorf("config file=%s is not yaml type,pls use the right type", confFile))
+	}
+
+	viper.SetConfigFile(confFile)
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+
+	//配置变化
+	viper.WatchConfig() //监听配置变化
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		logger.MainLogger.Error("config=" + e.Name + " change")
+		onConfigChange()
+	})
+}
+
+func PushConfigToRemote(etcdAddrs []string,
+	configKey string,
+	configFile string) (err error) {
+
+	if exist, err := utils.Exists(configFile); err != nil || !exist {
+		panic("config file not exist,file=" + configFile)
+	}
+
+	cli, err := clientv3.New(clientv3.Config{
+		Endpoints:   etcdAddrs,
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	confByte, err := utils.ReadFileAsByte(configFile)
+	if err != nil {
+		panic(err)
+	}
+	e := governance.EtcdType{}
+	err = e.Put(cli, configKey, string(confByte))
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
+// InitRemoteConfig 从远程etcd服务器中初始配置
+func InitRemoteConfig(etcdAddrs []string,
+	configKey string,
+	onConfigChange func()) (err error) {
+	cli, err := clientv3.New(clientv3.Config{
+		Endpoints:   etcdAddrs,
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		panic(err)
+	}
+	e := &governance.EtcdType{}
+	//首次获取此值
+	val, err := e.Get(cli, configKey)
+	if err != nil {
+		panic(err)
+	}
+	viper.SetConfigType("yaml")
+	err = viper.ReadConfig(strings.NewReader(val))
+	if err != nil {
+		panic(err)
+	}
+	//监控
+	err = e.RunToWatch(cli,
+		configKey,
+		func(key, val string) { //key change
+			logger.MainLogger.Error("config=" + key + " change")
+			err = viper.ReadConfig(strings.NewReader(val))
+			if err != nil {
+				panic(err)
+			}
+			onConfigChange()
+		},
+		func(key string) { //key been delete
+			logger.MainLogger.Error("config=" + key + " been delete")
+			onConfigChange()
+		},
+		func(code int, msg string) { //error happen
+			logger.MainLogger.Error("config=" + configKey +
+				" error happen code=" + utils.Num2Str(code) + ",msg=" + msg)
+		})
+	if err != nil {
+		return
+	}
+	return
+}

@@ -30,4 +30,9 @@ GOARCH=amd64 GOOS=linux go build -ldflags "-X 'main.commit=$COMMIT_TAG' -X 'main
 mv {{.AppName}}_server ../..
 cd -
 
+cd cmd/conf
+GOARCH=amd64 GOOS=linux go build -ldflags "-X 'main.commit=$COMMIT_TAG' -X 'main.date=$BUILT_AT'" -o {{.AppName}}_conf .
+mv {{.AppName}}_conf ../..
+cd -
+
 #end

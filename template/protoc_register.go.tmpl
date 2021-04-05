@@ -32,7 +32,7 @@ func DoRegister(grpcServer *grpc.Server,instance string) (err error) {
 {{end}}
 
     //注册中心注册
-    serviceKey := viper.GetString("etcd.registerKey")
+    serviceKey := viper.GetString("etcd.serviceKey")
 
     cli, err := governance.DefaultEtcdV3Client()
     if err != nil {

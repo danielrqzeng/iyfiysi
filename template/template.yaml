@@ -24,16 +24,16 @@ version: "v1.0.0"
 #  `-- third_party
 
 templates:
-# 格式说明
-#  - id: "utils_init" #可为空,若是有,则必须唯一
-#    flag: 5 # 标识(比特组合)，0:none,1:文件类型,2:目录类型,4:给iyfiysi使用,8:给protoc-gen-iyfiysi使用
-#    name: "util_init" #模板名称
-#    desc: "公共类初始化" #模板描述
-#    src: "util_init.go.tmpl" # 模板原文件(对应template文件夹中的模板文件,其用statik打包在bin包里面)
-#    dst: "internal/pkg/utils/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
-#    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
-#    params:
-#      PackageName: "utils"
+  # 格式说明
+  #  - id: "utils_init" #可为空,若是有,则必须唯一
+  #    flag: 5 # 标识(比特组合)，0:none,1:文件类型,2:目录类型,4:给iyfiysi使用,8:给protoc-gen-iyfiysi使用
+  #    name: "util_init" #模板名称
+  #    desc: "公共类初始化" #模板描述
+  #    src: "util_init.go.tmpl" # 模板原文件(对应template文件夹中的模板文件,其用statik打包在bin包里面)
+  #    dst: "internal/pkg/utils/init.go" # 生成的文件或者目录，其为unix格式的分隔形式
+  #    # 模板需要的参数，系统会默认带有Domain,AppName,CreateTime三个变量，其他需要的可填写对于的kv中
+  #    params:
+  #      PackageName: "utils"
 
   - id: "license"
     flag: 5 # 5=1+4:文件类型且是给iyfiysi使用
@@ -56,6 +56,22 @@ templates:
     src: "build.sh.tmpl"
     dst: "build.sh"
     params:
+  - id: "conf_init"
+    flag: 5
+    name: "conf_init"
+    desc: "配置初始化"
+    src: "model_init.go.tmpl"
+    dst: "internal/pkg/conf/init.go"
+    params:
+      PackageName: "conf"
+  - id: "conf_mgr_main"
+    flag: 5
+    name: "conf_mgr_main"
+    desc: "公共类初始化"
+    src: "conf_mgr_main.go.tmpl"
+    dst: "internal/pkg/conf/main.go"
+    params:
+      PackageName: "conf"
   - id: "utils_init"
     flag: 5
     name: "util_init"
@@ -104,10 +120,10 @@ templates:
     dst: "internal/pkg/utils/net_test.go"
     params:
       PackageName: "utils"
-  - id: "etcdv3"
+  - id: "db_init"
     flag: 5
-    name: "etcdv3"
-    desc: "etcd v3的初始化"
+    name: "db_init"
+    desc: "db的初始化"
     src: "model_init.go.tmpl"
     dst: "internal/pkg/db/init.go"
     params:
@@ -158,6 +174,14 @@ templates:
     desc: "etcd v3的sdk封装"
     src: "etcdv3.go.tmpl"
     dst: "internal/pkg/governance/etcdv3.go"
+    params:
+      PackageName: "governance"
+  - id: "governance_instance"
+    flag: 5
+    name: "governance_instance"
+    desc: "服务治理中获取instance的ip信息"
+    src: "governance_instance.go.tmpl"
+    dst: "internal/pkg/governance/instance.go"
     params:
       PackageName: "governance"
   - id: "interceptor"
@@ -329,6 +353,14 @@ templates:
     dst: "internal/app/server/service/service.go"
     params:
       PackageName: "service"
+  - id: "conf_mgr"
+    flag: 5
+    name: "conf mgr"
+    desc: "配置管理"
+    src: "conf_main.go.tmpl"
+    dst: "cmd/conf/main.go"
+    params:
+      PackageName: "main"
   - id: "conf_app"
     flag: 5
     name: "conf_app"

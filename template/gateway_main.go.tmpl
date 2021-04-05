@@ -4,7 +4,6 @@ package {{.PackageName}}
 
 import (
     "flag"
-	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"net/http"
     "strings"
@@ -16,13 +15,17 @@ import (
     "{{.Domain}}/{{.AppName}}/internal/pkg/interceptor"
     "{{.Domain}}/{{.AppName}}/internal/pkg/utils"
     "{{.Domain}}/{{.AppName}}/internal/app/gateway/discovery"
+    "{{.Domain}}/{{.AppName}}/internal/pkg/conf"
+    "{{.Domain}}/{{.AppName}}/internal/pkg/governance"
 )
 
 
 //定义一个全局变量的命令行接收参数
 var (
-	confFlag     = flag.String("conf", "./conf/app.yaml", "configuration file")
-	versionFlag  = flag.Bool("version", false, "print the current version")
+    etcdServerFlag  = flag.String("etcd", "http://127.0.0.1:2379", `etcd server,split with "," if more than one etcd server`)
+	confKeyFlag     = flag.String("conf_key", "/{{.AppName}}/config/app.yaml", `etcd conf key`)
+	confFlag        = flag.String("conf", "./conf/app.yaml", "configuration file")
+	versionFlag     = flag.Bool("version", false, "print the current version")
 )
 
 // Variables set at build time
@@ -33,29 +36,18 @@ var (
 )
 
 
-func initConfig() {
-	//**********default conf/app.yaml**********
-	confFile := *confFlag
-	if !strings.HasSuffix(confFile, ".yaml") {
-		panic(fmt.Errorf("config file=%s is not yaml type,pls use the right type", confFile))
-	}
-
-	viper.SetConfigFile(confFile)
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
-	}
-
-	//配置变化
-	viper.WatchConfig() //监听配置变化
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		logger.MainLogger.Error("config=" + e.Name + " change")
-	})
-}
-
 
 func initAll() {
-	initConfig()
+	conf.Init()
+	err := conf.InitRemoteConfig(
+		strings.Split(*etcdServerFlag, ","),
+		*confKeyFlag,
+		func() {
+			fmt.Println(viper.GetString("version"))
+		})
+	if err != nil {
+		panic(err)
+	}
 	//做各个部件的初始化
 	logger.Init()
 	utils.Init()
@@ -72,7 +64,15 @@ func main() {
 	initAll()
 
 	etcdServers := viper.GetStringSlice("etcd.etcdServer")
-	instance := viper.GetString("gateway.listen")
+	instanceIP := governance.GetGatewayInstanceAddr()
+    instancePort := 0
+    for i := viper.GetInt("server.minPort"); i < viper.GetInt("server.maxPort"); i++ {
+    	if utils.IsPortAvailable(i) {
+    		instancePort = i
+    		break
+    	}
+    }
+    instance := fmt.Sprintf("%s:%d", instanceIP, instancePort)
 	jaegerServers := viper.GetStringSlice("jaeger.jaegerServer")
 
 	grpcMux := runtime.NewServeMux()

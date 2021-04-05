@@ -80,3 +80,13 @@ func WriteFile(absFileName string, data []byte) (err error) {
 	}
 	return
 }
+
+
+// ReadFileAsByte 读取文件的内容
+func ReadFileAsByte(absFileName string) (data []byte, err error) {
+	data, err = ioutil.ReadFile(absFileName)
+	if err != nil {
+		return
+	}
+	return
+}

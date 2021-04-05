@@ -1,13 +1,22 @@
 # config file gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
 
 app: "{{.AppName}}"
-version: "{{.Version}}"
+version: "{{.Version}}" # 版本，由于服务治理是基于app/version作为前缀key的，是以若是提供一样的服务，可以不变，否则变之
 token: "7625C007783D1B09F2522E3F0A533404" # gateway->server调用认证
 limit: 1000
 
 # gateway service,不支持即改即生效
 gateway:
   listen: "{{.GatewayAddr}}" #侦听的地址，形如:127.0.0.1:8081,:8081
+  minPort: 8081
+  maxPort: 8081
+  ignoreIP: # 若是机器中存在这些ip，忽略之（优先于ip列表判断）
+    - "10.*.*.1"
+    - "172.*.*.1"
+    - "192.168.*.1"
+  ip: # ip列表，对于提供服务的服务方，优先使用此配置的ip，若是列表为空，则程序自寻找
+    - "172.30.0.14" #此列表也是有优先级的，第一个是最优先的，也支持172.30.0.*这种掩码格式的ip配置
+    - "127.0.0.1"
 
 # server service,不支持即改即生效
 server:
@@ -25,7 +34,7 @@ server:
 # etcd,不支持即改即生效
 etcd:
   enable: {{.EtcdEnable}} #是否开启etcd服务，目前只能开启
-  registerKey: "service_{{.AppName}}" #注册服务时候的key
+  serviceKey: "{{.AppName}}/{{.Version}}" #注册服务时候的key
   etcdServer:
 {{- range $EtcdServer := .EtcdServers}}
     - "{{$EtcdServer}}"

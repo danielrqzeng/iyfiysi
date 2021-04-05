@@ -13,9 +13,9 @@ import (
 )
 
 func DoDiscovery(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) (err error) {
-	registerKey := viper.GetString("etcd.registerKey")
+	serviceKey := viper.GetString("etcd.serviceKey")
 	{{- range $ServiceName := .Services}}
-	err = gw.Register{{$ServiceName}}HandlerFromEndpoint(ctx, mux, registerKey, opts)
+	err = gw.Register{{$ServiceName}}HandlerFromEndpoint(ctx, mux, serviceKey, opts)
     if err != nil {
         return
     }

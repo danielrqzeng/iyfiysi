@@ -1,0 +1,118 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+package {{ .PackageName }}
+
+import (
+	"github.com/spf13/viper"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
+)
+
+//GetInstanceAddr 获取gateway实例的ip（给gateway做侦听）
+func GeInstanceAddr(ignoreIPList, potentialIPList []string) (instanceIP string) {
+	//先获取ip
+	instanceIP = ""
+	mip, err := utils.GetNetIP() //machine现有ip（其可能包含正常ip，网关，回路等等)
+	if err != nil {
+		panic(err)
+	}
+	ipList := make([]string, 0) //进程所在机器的可用的ip列表,排除掉网关，不可用等ip后的可用ip
+	aIP := make([]string, 0)
+	bIP := make([]string, 0)
+	cIP := make([]string, 0)
+	lIP := make([]string, 0)
+	nIP := make([]string, 0)
+	//选用地址优先级是A>B>C>net>local
+	//A:10.0.0.0	-	10.255.255.255
+	//B:172.16.0.0 	- 	172.31.255.255
+	//C:192.168.0.0	-	192.168.255.255
+	//local:127.0.0.1
+	//net: other
+	for _, i := range mip {
+		if !utils.IsIPValid(i) {
+			continue
+		}
+
+		//此ip是被忽略的，则不列入可用ipList中
+		ignore := false
+		for _, ii := range ignoreIPList {
+			if match, err := utils.MatchReg("^"+ii+"$", i); err == nil && match {
+				ignore = true
+				continue
+			}
+		}
+		if ignore {
+			continue
+		}
+		//ip是回路ip
+		if utils.IsLoopback(i) {
+			lIP = append(lIP, i)
+			continue
+		}
+		if yes, err := utils.IsIPAType(i); err == nil && yes {
+			aIP = append(aIP, i)
+			continue
+		}
+		if yes, err := utils.IsIPBType(i); err == nil && yes {
+			bIP = append(bIP, i)
+			continue
+		}
+		if yes, err := utils.IsIPCType(i); err == nil && yes {
+			cIP = append(cIP, i)
+			continue
+		}
+		nIP = append(nIP, i)
+	}
+	//ip优先级
+	ipList = append(ipList, aIP...)
+	ipList = append(ipList, bIP...)
+	ipList = append(ipList, cIP...)
+	ipList = append(ipList, nIP...)
+	ipList = append(ipList, lIP...)
+
+	//配置中没有配置ip优先级，则使用机器ip
+	if len(potentialIPList) == 0 {
+		if len(ipList) <= 0 {
+			panic("ip not exist ,gateway cant start")
+		}
+		instanceIP = ipList[0]
+		return
+	}
+
+	for _, i := range potentialIPList {
+		found := false
+		for _, j := range ipList {
+			ok, err := utils.MatchReg("^"+i+"$", j)
+			if err != nil {
+				continue
+			}
+			if ok {
+				found = true
+				break
+			}
+		}
+		if found {
+			instanceIP = i
+			break
+		}
+	}
+
+	if instanceIP == "" {
+		panic("ip not exist ,gateway cant start")
+	}
+	return
+}
+
+//GetGatewayInstanceAddr 获取gateway实例的ip（给gateway做侦听）
+func GetGatewayInstanceAddr() (instanceIP string) {
+	cip := viper.GetStringSlice("gateway.potentialIP") //config ip
+	unuseIPList := viper.GetStringSlice("gateway.ignoreIP")
+	return GeInstanceAddr(cip, unuseIPList)
+}
+
+//GetServiceInstanceAddr 获取服务实例的ip（给server做侦听）
+func GetServiceInstanceAddr() (instanceIP string) {
+	cip := viper.GetStringSlice("server.potentialIP") //config ip
+	unuseIPList := viper.GetStringSlice("server.ignoreIP")
+	return GeInstanceAddr(cip, unuseIPList)
+}
+
