@@ -23,10 +23,9 @@ import (
 
 //定义一个全局变量的命令行接收参数
 var (
-    etcdServerFlag = flag.String("etcd", "http://127.0.0.1:2379", `etcd server,split with "," if more than one etcd server`)
-	confKeyFlag    = flag.String("conf_key", "/{{.AppName}}/config/app.yaml", `etcd conf key`)
-	confFlag    = flag.String("conf", "./conf/app.yaml", "configuration file")
-	versionFlag = flag.Bool("version", false, "print the current version")
+    etcdServerFlag  = flag.String("etcd", "http://127.0.0.1:2379", `etcd server,split with "," if more than one etcd server`)
+	confKeyFlag     = flag.String("conf_key", "/{{.AppName}}/config/app.yaml", `etcd conf key`)
+	versionFlag     = flag.Bool("version", false, "print the current version")
 )
 
 // Variables set at build time
@@ -66,7 +65,9 @@ func main() {
 	etcdServers := viper.GetStringSlice("etcd.etcdServer")
 	instanceIP := governance.GetServiceInstanceAddr()
 	instancePort := 0
-	for i := viper.GetInt("server.minPort"); i < viper.GetInt("server.maxPort"); i++ {
+    minPort := viper.GetInt("server.minPort")
+    maxPort := viper.GetInt("server.maxPort")
+    for i := minPort; i <= maxPort; i++ {
 		if utils.IsPortAvailable(i) {
 			instancePort = i
 			break

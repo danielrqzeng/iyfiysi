@@ -12,34 +12,42 @@ import (
 	grpcOpentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpcPrometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/opentracing/opentracing-go"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"test.com/voice/internal/pkg/logger"
-	"test.com/voice/internal/pkg/trace"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/trace"
 )
 
 // GetGatewayInterceptors all Unary interceptors for gateway
 func GetGatewayInterceptors() (interceptors grpc.UnaryClientInterceptor) {
-	interceptors = grpcMiddleware.ChainUnaryClient(
-		trace.GatewayTracerClientInterceptor(opentracing.GlobalTracer()), //拦截器之链路追踪
-		grpcZap.UnaryClientInterceptor(logger.GrpcLogger),                 //拦截器之日志
-		grpcPrometheus.UnaryClientInterceptor,                             //拦截器之监控
-		grpcRetry.UnaryClientInterceptor(),                                //拦截器之重试
-		ClientLimiterInterceptor(),                                        //限流
-	)
+	interceptorList := make([]grpc.UnaryClientInterceptor, 0)
+	if viper.GetBool("jaeger.enable") {
+		//拦截器之链路追踪
+		interceptorList = append(interceptorList, trace.GatewayTracerClientInterceptor(opentracing.GlobalTracer()))
+	}
+	interceptorList = append(interceptorList, grpcZap.UnaryClientInterceptor(logger.GrpcLogger)) //拦截器之日志
+	interceptorList = append(interceptorList, grpcPrometheus.UnaryClientInterceptor)             //拦截器之监控
+	interceptorList = append(interceptorList, grpcRetry.UnaryClientInterceptor())                //拦截器之重试
+	interceptorList = append(interceptorList, ClientLimiterInterceptor())                        //限流
+
+	interceptors = grpcMiddleware.ChainUnaryClient(interceptorList...)
 	return
 }
 
-// GetServerInterceptors all interceptors for gateway
+// GetServerInterceptors all interceptors for server
 func GetServerInterceptors() (interceptors grpc.UnaryServerInterceptor) {
-	interceptors = grpcMiddleware.ChainUnaryServer(
-		grpcOpentracing.UnaryServerInterceptor(
-			grpcOpentracing.WithTracer(opentracing.GlobalTracer())), //拦截器之链路追踪
-		grpcPrometheus.UnaryServerInterceptor,                       //拦截器之监控
-		grpcZap.UnaryServerInterceptor(logger.GrpcLogger),           //拦截器之grpc日志
-		grpcAuth.UnaryServerInterceptor(BearerAuthInterceptor),      //拦截器之认证
-		grpcRecovery.UnaryServerInterceptor(),                       //拦截器之恢复
-	)
+	interceptorList := make([]grpc.UnaryServerInterceptor, 0)
+	if viper.GetBool("jaeger.enable") {
+		//拦截器之链路追踪
+		interceptorList = append(interceptorList, grpcOpentracing.UnaryServerInterceptor(
+			grpcOpentracing.WithTracer(opentracing.GlobalTracer())))
+	}
+	interceptorList = append(interceptorList, grpcZap.UnaryServerInterceptor(logger.GrpcLogger))      //拦截器之日志
+	interceptorList = append(interceptorList, grpcPrometheus.UnaryServerInterceptor)                  //拦截器之监控
+	interceptorList = append(interceptorList, grpcAuth.UnaryServerInterceptor(BearerAuthInterceptor)) //拦截器之认证
+	interceptorList = append(interceptorList, grpcRecovery.UnaryServerInterceptor())                  //拦截器之恢复
 
+	interceptors = grpcMiddleware.ChainUnaryServer(interceptorList...)
 	return
 }

@@ -1,0 +1,19 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+
+package {{.PackageName}}
+
+import (
+	"context"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"google.golang.org/grpc"
+	gw "{{.Domain}}/{{.AppName}}/proto"
+)
+
+func DoRegister(
+	ctx context.Context,
+	serviceKey string,
+	mux *runtime.ServeMux,
+	opts []grpc.DialOption) (err error) {
+	return
+}

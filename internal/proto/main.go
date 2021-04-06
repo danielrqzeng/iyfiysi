@@ -258,8 +258,8 @@ func DoParse() {
 		if tmpl.Flag&comm.TemplateConfigFlagProtoc == 0 {
 			continue
 		}
-		//服务发现
-		if tmpl.ID == "protoc_discovery" {
+		//gateway服务注册
+		if tmpl.ID == "protoc_gateway_register" {
 			//整合三个地方的变量
 			params := make(map[string]interface{})
 			//1.来自pb的变量

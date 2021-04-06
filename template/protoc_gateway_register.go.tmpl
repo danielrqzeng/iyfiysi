@@ -6,19 +6,23 @@ package {{.PackageName}}
 
 import (
 	"context"
-	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"google.golang.org/grpc"
 	gw "{{.Domain}}/{{.AppName}}/proto"
 )
 
-func DoDiscovery(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) (err error) {
-	serviceKey := viper.GetString("etcd.serviceKey")
+func DoRegister(
+	ctx context.Context,
+	serviceKey string,
+	mux *runtime.ServeMux,
+	opts []grpc.DialOption) (err error) {
+
 	{{- range $ServiceName := .Services}}
-	err = gw.Register{{$ServiceName}}HandlerFromEndpoint(ctx, mux, serviceKey, opts)
+    err = gw.Register{{$ServiceName}}HandlerFromEndpoint(ctx, mux, serviceKey, opts)
     if err != nil {
         return
     }
     {{end}}
-    return
+	return
 }
+

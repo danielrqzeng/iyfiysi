@@ -1,0 +1,94 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+package {{.PackageName}}
+
+import (
+	"context"
+	"fmt"
+	etcdNaming "github.com/coreos/etcd/clientv3/naming"
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	"net/http"
+	"{{.Domain}}/{{.AppName}}/internal/app/gateway/service"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/governance"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/interceptor"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
+)
+
+func GrpcServer() (gwMux *runtime.ServeMux) {
+	gwMux = runtime.NewServeMux()
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	_ = cancel
+	//defer cancel()
+
+	//----------etcd的服务发现option-------------------
+	cli, err := governance.DefaultEtcdV3Client()
+	if err != nil {
+		panic(err)
+	}
+	//defer cli.Close()
+
+	//--------------服务发现&负债均衡组件----------------------
+	r := &etcdNaming.GRPCResolver{Client: cli} //其需要配合gw.RegisterXXXXXServiceHandlerFromEndpoint中的endpoint参数使用
+	lbOption := grpc.WithBalancer(grpc.RoundRobin(r))
+
+	//--------------ssl证书option----------------------
+	serverName := viper.GetString("keystore.serverName")
+	caFile := viper.GetString("keystore.ca")
+	privateFile := viper.GetString("keystore.private")
+	publicFile := viper.GetString("keystore.public")
+	_, clientCred, err := utils.GenCredentials(caFile, publicFile, privateFile, serverName)
+	if err != nil {
+		panic(err)
+	}
+	sslOption := grpc.WithTransportCredentials(clientCred)
+	//--------------拦截器之服务调用鉴权----------------------
+	tokenOption := grpc.WithPerRPCCredentials(interceptor.BearerRPCCredentials()) //调用认证
+
+	//--------------拦截器option----------------------
+	interceptors := interceptor.GetGatewayInterceptors()
+	interceptorOption := grpc.WithUnaryInterceptor(
+		grpcMiddleware.ChainUnaryClient(interceptors))
+
+	//所有选项
+	opts := []grpc.DialOption{
+		lbOption,
+		sslOption,
+		tokenOption,
+		interceptorOption,
+	}
+
+	serviceKey := viper.GetString("etcd.serviceKey")
+	err = service.DoRegister(ctx, serviceKey, gwMux, opts)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func Run() (err error) {
+	instanceIP := governance.GetGatewayInstanceAddr()
+	instancePort := 0
+	minPort := viper.GetInt("gateway.minPort")
+	maxPort := viper.GetInt("gateway.maxPort")
+	for i := minPort; i <= maxPort; i++ {
+		if utils.IsPortAvailable(i) {
+			instancePort = i
+			break
+		}
+	}
+	instance := fmt.Sprintf("%s:%d", instanceIP, instancePort)
+
+	gwMux := GrpcServer()
+	httpMux := http.NewServeMux()
+	mux := &interceptor.HttpInterceptor{gwMux}
+	httpMux.Handle("/", mux)
+
+	// Start HTTP server (and proxy calls to gRPC server endpoint)
+	err = http.ListenAndServe(instance, httpMux)
+	return
+}

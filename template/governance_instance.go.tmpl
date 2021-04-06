@@ -105,14 +105,14 @@ func GeInstanceAddr(ignoreIPList, potentialIPList []string) (instanceIP string) 
 //GetGatewayInstanceAddr 获取gateway实例的ip（给gateway做侦听）
 func GetGatewayInstanceAddr() (instanceIP string) {
 	cip := viper.GetStringSlice("gateway.potentialIP") //config ip
-	unuseIPList := viper.GetStringSlice("gateway.ignoreIP")
-	return GeInstanceAddr(cip, unuseIPList)
+	ignoreIP := viper.GetStringSlice("gateway.ignoreIP")
+	return GeInstanceAddr(ignoreIP,cip)
 }
 
 //GetServiceInstanceAddr 获取服务实例的ip（给server做侦听）
 func GetServiceInstanceAddr() (instanceIP string) {
 	cip := viper.GetStringSlice("server.potentialIP") //config ip
-	unuseIPList := viper.GetStringSlice("server.ignoreIP")
-	return GeInstanceAddr(cip, unuseIPList)
+	ignoreIP := viper.GetStringSlice("server.ignoreIP")
+	return GeInstanceAddr(ignoreIP,cip)
 }
 

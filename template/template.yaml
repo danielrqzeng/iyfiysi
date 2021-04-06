@@ -140,7 +140,7 @@ templates:
     flag: 5
     name: "trace init"
     desc: "链路追踪的初始化"
-    src: "model_init.go.tmpl"
+    src: "trace_init.go.tmpl"
     dst: "internal/pkg/trace/init.go"
     params:
       PackageName: "trace"
@@ -291,35 +291,34 @@ templates:
     flag: 5
     name: "cmd_gateway_main"
     desc: "gateway bin"
-    src: "gateway_main.go.tmpl"
+    src: "cmd_gateway_main.go.tmpl"
     dst: "cmd/gateway/main.go"
     params:
       PackageName: "main"
-
-  - id: "gateway_discovery_init"
+  - id: "gateway_service_init"
     flag: 5
-    name: "gateway_discovery_init"
-    desc: "gateway服务发现初始文件"
-    src: "gateway_discovery_init.go.tmpl"
-    dst: "internal/app/gateway/discovery/init.go"
+    name: "gateway_service_init"
+    desc: "gateway服务注册服务初始化"
+    src: "model_init.go.tmpl"
+    dst: "internal/app/gateway/service/init.go"
     params:
-      PackageName: "discovery"
-  - id: "gateway_discovery_main"
+      PackageName: "service"
+  - id: "gateway_service_register"
     flag: 5
-    name: "gateway_discovery_main"
-    desc: "gateway服务发现主文件"
-    src: "gateway_discovery_main.go.tmpl"
-    dst: "internal/app/gateway/discovery/main.go"
+    name: "gateway_service_register"
+    desc: "gateway服务注册逻辑"
+    src: "gateway_register.go.tmpl"
+    dst: "internal/app/gateway/service/register.go"
     params:
-      PackageName: "discovery"
-  - id: "gateway_discovery_discovery"
+      PackageName: "service"
+  - id: "app_gateway_main"
     flag: 5
-    name: "gateway_discovery_discovery"
-    desc: "gateway 服务发现实际逻辑文件"
-    src: "gateway_discovery_discovery.go.tmpl"
-    dst: "internal/app/gateway/discovery/discovery.go"
+    name: "app_gateway_main"
+    desc: "gateway主逻辑"
+    src: "app_gateway_main.go.tmpl"
+    dst: "internal/app/gateway/main.go"
     params:
-      PackageName: "discovery"
+      PackageName: "gateway"
   - id: "cmd_server_main"
     flag: 5
     name: "cmd_server_main"
@@ -382,14 +381,14 @@ templates:
       KeystoreCA: "keystore/ca.crt"
       KeystorePublicKey: "keystore/grpc.crt"
       KeystorePrivateKey: "keystore/grpc.key"
-  - id: "protoc_discovery" #一定要此名称,以分辨此为服务发现配置
+  - id: "protoc_gateway_register" #一定要此名称,以分辨此为服务发现配置
     flag: 9
-    name: "protoc_discovery"
-    desc: "protoc生成的服务发现"
-    src: "protoc_discovery.go.tmpl"
-    dst: "../internal/app/gateway/discovery/discovery.go"
+    name: "protoc_gateway_register"
+    desc: "protoc生成的gateway服务注册"
+    src: "protoc_gateway_register.go.tmpl"
+    dst: "../internal/app/gateway/service/register.go"
     params:
-      PackageName: "discovery"
+      PackageName: "service"
   - id: "protoc_register" #一定要此名称,以分辨此为服务发现配置
     flag: 9
     name: "protoc_register"

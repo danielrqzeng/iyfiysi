@@ -65,12 +65,12 @@ func GetNetIP() (ip []string, err error) {
 		if !ok {
 			continue
 		}
-		if ipAddr.IP.IsLoopback() {
-			continue
-		}
-		if !ipAddr.IP.IsGlobalUnicast() {
-			continue
-		}
+		//if ipAddr.IP.IsLoopback() {
+		//	continue
+		//}
+		//if !ipAddr.IP.IsGlobalUnicast() {
+		//	continue
+		//}
 		ip = append(ip, ipAddr.IP.String())
 	}
 	return
