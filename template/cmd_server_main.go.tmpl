@@ -1,0 +1,62 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+package {{.PackageName}}
+
+import (
+	"flag"
+	"fmt"
+	"github.com/spf13/viper"
+	"os"
+	"strings"
+	"{{.Domain}}/{{.AppName}}/internal/app/server"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/trace"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/conf"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
+)
+
+//定义一个全局变量的命令行接收参数
+var (
+	etcdServerFlag = flag.String("etcd", "http://127.0.0.1:2379", `etcd server,split with "," if more than one etcd server`)
+	confKeyFlag    = flag.String("conf_key", "/{{.AppName}}/config/app.yaml", `etcd conf key`)
+	versionFlag    = flag.Bool("version", false, "print the current version")
+)
+
+// Variables set at build time
+var (
+	version = "v1.0.0"
+	commit  = "unknown"
+	date    = "unknown"
+)
+
+func initAll() {
+	conf.Init()
+	err := conf.InitRemoteConfig(
+		strings.Split(*etcdServerFlag, ","),
+		*confKeyFlag,
+		func() {
+			fmt.Println(viper.GetString("version"))
+		})
+	if err != nil {
+		panic(err)
+	}
+	//做各个部件的初始化
+	logger.Init()
+	utils.Init()
+	trace.Init()
+}
+
+func main() {
+	flag.Parse()
+
+	if *versionFlag {
+		fmt.Printf("Version %v, commit %v, built at %v\n", version, commit, date)
+		os.Exit(0)
+	}
+	defer utils.DeferWhenCoreDump()
+
+	initAll()
+	if err := server.Run(); err != nil {
+		fmt.Println(err)
+	}
+}

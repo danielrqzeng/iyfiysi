@@ -323,25 +323,24 @@ templates:
     flag: 5
     name: "cmd_server_main"
     desc: "server服务的主文件"
-    src: "server_main.go.tmpl"
+    src: "cmd_server_main.go.tmpl"
     dst: "cmd/server/main.go"
     params:
       PackageName: "main"
+  - id: "app_server_main"
+    flag: 5
+    name: "app_server_main"
+    desc: "server 服务初始文件"
+    src: "app_server_main.go.tmpl"
+    dst: "internal/app/server/main.go"
+    params:
+      PackageName: "server"
   - id: "server_service_init"
     flag: 5
     name: "server_service_init"
     desc: "server 服务初始文件"
-    src: "server_service_init.go.tmpl"
+    src: "model_init.go.tmpl"
     dst: "internal/app/server/service/init.go"
-    params:
-      PackageName: "service"
-
-  - id: "server_service_main"
-    flag: 5
-    name: "server_service_main"
-    desc: "server 服务初始文件"
-    src: "server_service_main.go.tmpl"
-    dst: "internal/app/server/service/main.go"
     params:
       PackageName: "service"
   - id: "server_service_service"

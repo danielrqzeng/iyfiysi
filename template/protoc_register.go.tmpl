@@ -4,14 +4,7 @@
 package {{.PackageName}}
 
 import (
-    "fmt"
-    "context"
     "google.golang.org/grpc"
-    "google.golang.org/grpc/naming"
-    "github.com/spf13/viper"
-    "github.com/coreos/etcd/clientv3"
-    etcdnaming "github.com/coreos/etcd/clientv3/naming"
-    "{{.Domain}}/{{.AppName}}/internal/pkg/governance"
     "{{.Domain}}/{{.AppName}}/proto"
 )
 
@@ -20,39 +13,15 @@ import (
 type {{$ServiceName}}Impl struct{}
 {{end}}
 
-
-// DoRegister register to grpc & etcd server
-func DoRegister(grpcServer *grpc.Server,instance string) (err error) {
-    //本地服务注册
-{{- range $ServiceName := .Services}}
-	{
-		s := &{{$ServiceName}}Impl{}
+// DoRegister 注册服务
+func DoRegister(grpcServer *grpc.Server) (err error) {
+	//本地服务注册
+    {{- range $ServiceName := .Services}}
+    {
+    	s := &{{$ServiceName}}Impl{}
     	proto.Register{{$ServiceName}}Server(grpcServer, s)
-	}
-{{end}}
-
-    //注册中心注册
-    serviceKey := viper.GetString("etcd.serviceKey")
-
-    cli, err := governance.DefaultEtcdV3Client()
-    if err != nil {
-    	return
     }
-    e := &governance.EtcdType{}
-	err = e.RunToKeepAlive(cli, serviceKey,
-		func(leaseID clientv3.LeaseID) {
-			ops := clientv3.WithLease(leaseID)
-			r := &etcdnaming.GRPCResolver{Client: cli}
-			err = r.Update(context.TODO(), serviceKey,
-				naming.Update{Op: naming.Add, Addr: instance, Metadata: "..."},
-				ops)
-		},
-		func(code int, msg string) {
-			fmt.Println("serviceKey=", serviceKey, ",code=", code, ",msg=", msg)
-		})
+    {{end}}
 
-	if err != nil {
-		return
-	}
-    return
+	return
 }
