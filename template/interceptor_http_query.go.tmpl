@@ -1,0 +1,87 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+package {{.PackageName}}
+
+import (
+	"bytes"
+	"fmt"
+	_ "github.com/opentracing/opentracing-go"
+	"io/ioutil"
+	"net/http"
+	"time"
+
+	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
+)
+
+// HttpInterceptorResponseWriter http拦截器writer-作用是截取http返回数据
+type HttpInterceptorResponseWriter struct {
+	w      http.ResponseWriter
+	status int
+	size   int
+	body   []byte
+}
+
+// Header 头部override
+func (this *HttpInterceptorResponseWriter) Header() http.Header {
+	return this.w.Header()
+}
+
+// Write override
+func (this *HttpInterceptorResponseWriter) Write(b []byte) (int, error) {
+	if this.body == nil {
+		this.body = make([]byte, 0)
+	}
+	size, err := this.w.Write(b)
+	this.size += size
+	this.body = append(this.body, b...)
+	return size, err
+}
+
+// WriteHeader override
+func (this *HttpInterceptorResponseWriter) WriteHeader(statusCode int) {
+	this.w.WriteHeader(statusCode)
+	this.status = statusCode
+}
+
+// Status ...
+func (this *HttpInterceptorResponseWriter) Status() int {
+	return this.status
+}
+
+// Body ...
+func (this *HttpInterceptorResponseWriter) Body() []byte {
+	return this.body
+}
+
+// Query 审计日志
+func Query(
+	next func(w http.ResponseWriter, r *http.Request),
+) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		//return s.mux.ServeHTTP(w,r)
+		method := r.Method
+		host := r.Host
+		scheme := r.Proto
+		url := r.URL.String()
+		_ = host
+
+		begin := time.Now()
+		//nested func
+		mw := &HttpInterceptorResponseWriter{w, 0, 0, nil}
+
+		//get reader content
+		rBody, _ := ioutil.ReadAll(r.Body)
+		r.Body.Close()
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(rBody))
+
+		next(mw, r)
+
+		status := mw.Status()
+		wBody := mw.Body()
+		logger.HttpLogger.Error(
+			fmt.Sprintf("%s %s %s %d|%v|%s|%s",
+				method, url, scheme, status, time.Now().Sub(begin),
+				string(rBody), string(wBody)),
+		)
+	}
+}

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/coreos/etcd/clientv3"
 	etcdNaming "github.com/coreos/etcd/clientv3/naming"
-	"github.com/gorilla/mux"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -16,15 +15,14 @@ import (
 	"google.golang.org/grpc/naming"
 	"google.golang.org/grpc/reflection"
 	"net/http"
-	"strings"
 	"{{.Domain}}/{{.AppName}}/internal/app/server/service"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/governance"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/interceptor"
-	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
 )
 
+//GrpcServer ...
 func GrpcServer() (server *grpc.Server, err error) {
-	interceptors := interceptor.GetServerInterceptors()
+	interceptors := interceptor.Mgr().GetServerInterceptors()
 	server = grpc.NewServer(grpc.UnaryInterceptor(interceptors))
 
 	//注册服务
@@ -41,18 +39,13 @@ func GrpcServer() (server *grpc.Server, err error) {
 	return
 }
 
-func Run() (err error) {
-	instanceIP := governance.GetServiceInstanceAddr()
-	instancePort := 0
-	minPort := viper.GetInt("server.minPort")
-	maxPort := viper.GetInt("server.maxPort")
-	for i := minPort; i <= maxPort; i++ {
-		if utils.IsPortAvailable(i) {
-			instancePort = i
-			break
-		}
+
+//runGRPC grpc服务
+func runGRPC() (err error) {
+	instance, err := governance.GetSetupInstanceAddrByConfKey("server")
+	if err != nil {
+		return
 	}
-	instance := fmt.Sprintf("%s:%d", instanceIP, instancePort)
 
 	//服务治理之注册
 	serviceKey := viper.GetString("etcd.serviceKey")
@@ -82,28 +75,55 @@ func Run() (err error) {
 		return
 	}
 
-	httpMux := mux.NewRouter()
-	httpMux.Handle("/metrics", promhttp.HandlerFor(
-		prometheus.DefaultGatherer,
-		promhttp.HandlerOpts{
-		},
-	))
-
 	keystorePublicKey := viper.GetString("keystore.public")
 	keystorePrivateKey := viper.GetString("keystore.private")
 	err = http.ListenAndServeTLS(instance,
 		keystorePublicKey,
 		keystorePrivateKey,
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.ProtoMajor == 2 &&
-				strings.Contains(
-					r.Header.Get("Content-Type"), "application/grpc") {
-				server.ServeHTTP(w, r)
-			} else {
-				httpMux.ServeHTTP(w, r)
-			}
-			return
-		}),
+		server,
+		//http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//	if r.ProtoMajor == 2 &&
+		//		strings.Contains(
+		//			r.Header.Get("Content-Type"), "application/grpc") {
+		//		server.ServeHTTP(w, r)
+		//	}
+		//	return
+		//}),
 	)
+	return
+}
+
+//runMetricsHTTP metric服务
+func runMetricsHTTP() {
+	if !viper.GetBool("metrics.enable") {
+		return
+	}
+
+	instance, err := governance.GetSetupInstanceAddrByConfKey("metrics.server")
+	if err != nil {
+		panic(err)
+	}
+	metricsPath := viper.GetString("metrics.server.path")
+	httpMux := http.NewServeMux()
+	httpMux.Handle(metricsPath, promhttp.HandlerFor(
+		prometheus.DefaultGatherer,
+		promhttp.HandlerOpts{},
+	))
+
+	// Start HTTP server (and proxy calls to gRPC server endpoint)
+	err = http.ListenAndServe(instance, httpMux)
+	return
+}
+
+//Run 启动
+func Run() (err error) {
+	//metrics
+	go runMetricsHTTP()
+
+	//grpc
+	err = runGRPC()
+	if err != nil {
+		return
+	}
 	return
 }

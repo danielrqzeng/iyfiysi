@@ -3,6 +3,7 @@
 package {{ .PackageName }}
 
 import (
+	"fmt"
 	"github.com/spf13/viper"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
 )
@@ -115,4 +116,36 @@ func GetServiceInstanceAddr() (instanceIP string) {
 	ignoreIP := viper.GetStringSlice("server.ignoreIP")
 	return GeInstanceAddr(ignoreIP,cip)
 }
+
+
+//SetupInstanceConfigType 服务启动侦听的地址的配置信息
+type SetupInstanceConfigType struct {
+	MinPort     uint64   `json:"minPort" yaml:"minPort"`
+	MaxPort     uint64   `json:"maxPort" yaml:"maxPort"`
+	IgnoreIP    []string `json:"ignoreIP" yaml:"ignoreIP"`
+	PotentialIP []string `json:"potentialIP" yaml:"potentialIP"`
+}
+
+//GetSetupInstanceAddrByConfKey 通过启动信息，找到启动所需要的侦听地址
+func GetSetupInstanceAddrByConfKey(confKey string) (addr string, err error) {
+	c := &SetupInstanceConfigType{}
+	err = viper.UnmarshalKey(confKey, c)
+	if err != nil {
+		return
+	}
+	ip := GeInstanceAddr(c.IgnoreIP, c.PotentialIP)
+
+	port := uint64(0)
+	minPort := c.MinPort
+	maxPort := c.MaxPort
+	for i := minPort; i <= maxPort; i++ {
+		if utils.IsPortAvailable(int(i)) {
+			port = i
+			break
+		}
+	}
+	addr = fmt.Sprintf("%s:%d", ip, port)
+	return
+}
+
 

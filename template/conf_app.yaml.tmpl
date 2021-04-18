@@ -5,36 +5,57 @@ version: "{{.Version}}" # 版本，由于服务治理是基于app/version作为�
 token: "7625C007783D1B09F2522E3F0A533404" # gateway->server调用认证
 limit: 1000
 
+# 服务启动会根据ip和port自己寻找合适的ip和端口使用来启动服务
+# 先从ignoreIP列表中过滤掉不用的ip，再根据potentialIP次第寻找可用ip
+ignoreIP: &ignoreIPRef
+  - "10.*.*.1"
+  - "172.*.*.1"
+  - "192.168.*.1"
+potentialIP: &potentialIPRef
+  - "172.30.0.14" #此列表也是有优先级的，第一个是最优先的，也支持172.30.0.*这种掩码格式的ip配置
+  - "127.0.0.1"
+
 # gateway service,不支持即改即生效
 gateway:
-  listen: "{{.GatewayAddr}}" #侦听的地址，形如:127.0.0.1:8081,:8081
-  minPort: 8081
-  maxPort: 8081
-  ignoreIP: # 若是机器中存在这些ip，忽略之（优先于potentialIP列表判断）
-    - "10.*.*.1"
-    - "172.*.*.1"
-    - "192.168.*.1"
-  potentialIP: # ip列表，对于提供服务的服务方，优先使用此配置的ip，若是列表为空，则程序自寻找
-    - "172.30.0.14" #此列表也是有优先级的，第一个是最优先的，也支持172.30.0.*这种掩码格式的ip配置
-    - "127.0.0.1"
+  minPort: 8000
+  maxPort: 8050
+  ignoreIP:
+    *ignoreIPRef
+  potentialIP:
+    *potentialIPRef
 
 # server service,不支持即改即生效
 server:
   minPort: 30000
   maxPort: 30500
-  ignoreIP: # 若是机器中存在这些ip，忽略之（优先于potentialIP列表判断）
-    - "10.*.*.1"
-    - "172.*.*.1"
-    - "192.168.*.1"
-  potentialIP: # ip列表，对于提供服务的服务方，优先使用此配置的ip，若是列表为空，则程序自寻找
-    - "172.30.0.14" #此列表也是有优先级的，第一个是最优先的，也支持172.30.0.*这种掩码格式的ip配置
-    - "127.0.0.1"
+  ignoreIP:
+    *ignoreIPRef
+  potentialIP:
+    *potentialIPRef
 
+metrics:
+  enable: {{.MetricsEnable}} # 是否开启监控
+  gateway:
+    path: "/metrics"
+    minPort: 41000
+    maxPort: 41500
+    ignoreIP:
+      *ignoreIPRef
+    potentialIP:
+      *potentialIPRef
+  server:
+    path: "/metrics"
+    minPort: 42000
+    maxPort: 42500
+    ignoreIP:
+      *ignoreIPRef
+    potentialIP:
+      *potentialIPRef
 
 # etcd,不支持即改即生效
 etcd:
   enable: {{.EtcdEnable}} #是否开启etcd服务，目前只能开启
-  serviceKey: "{{.AppName}}/{{.Version}}" #注册服务时候的key
+  serviceKey: "/{{.AppName}}/{{.Version}}" #注册服务时候的key
   etcdServer:
 {{- range $EtcdServer := .EtcdServers}}
     - "{{$EtcdServer}}"

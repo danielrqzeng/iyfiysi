@@ -184,14 +184,7 @@ templates:
     dst: "internal/pkg/governance/instance.go"
     params:
       PackageName: "governance"
-  - id: "interceptor"
-    flag: 5
-    name: "interceptor"
-    desc: "拦截器"
-    src: "interceptor.go.tmpl"
-    dst: "internal/pkg/interceptor/interceptor.go"
-    params:
-      PackageName: "interceptor"
+  # -----------------------interceptor-----------------------
   - id: "interceptor"
     flag: 5
     name: "interceptor"
@@ -208,22 +201,63 @@ templates:
     dst: "internal/pkg/interceptor/mgr.go"
     params:
       PackageName: "interceptor"
-  - id: "interceptor_auth"
+  - id: "interceptor_http_mgr"
     flag: 5
-    name: "interceptor_auth"
-    desc: "拦截器的认证实例"
-    src: "intercepotor_auth.go.tmpl"
-    dst: "internal/pkg/interceptor/auth.go"
+    name: "interceptor_http_mgr"
+    desc: "http拦截器的管理实例"
+    src: "interceptor_http_mgr.go.tmpl"
+    dst: "internal/pkg/interceptor/http/mgr.go"
     params:
-      PackageName: "interceptor"
-  - id: "interceptor_limiter"
+      PackageName: "http"
+  - id: "interceptor_http_query"
     flag: 5
-    name: "interceptor_limiter"
-    desc: "拦截器的限流器"
-    src: "intercepotor_limiter.go.tmpl"
-    dst: "internal/pkg/interceptor/limiter.go"
+    name: "interceptor_http_query"
+    desc: "http拦截器之query日志"
+    src: "interceptor_http_query.go.tmpl"
+    dst: "internal/pkg/interceptor/http/query.go"
     params:
-      PackageName: "interceptor"
+      PackageName: "http"
+  - id: "interceptor_http_cors"
+    flag: 5
+    name: "interceptor_http_cors"
+    desc: "http拦截器之跨域处理"
+    src: "interceptor_http_cors.go.tmpl"
+    dst: "internal/pkg/interceptor/http/cors.go"
+    params:
+      PackageName: "http"
+  - id: "interceptor_http_trace"
+    flag: 5
+    name: "interceptor_http_trace"
+    desc: "http拦截器的管理实例"
+    src: "interceptor_http_trace.go.tmpl"
+    dst: "internal/pkg/interceptor/http/trace.go"
+    params:
+      PackageName: "http"
+  - id: "interceptor_grpc_mgr"
+    flag: 5
+    name: "interceptor_grpc_mgr"
+    desc: "grpc拦截器的管理实例"
+    src: "interceptor_grpc_mgr.go.tmpl"
+    dst: "internal/pkg/interceptor/grpc/mgr.go"
+    params:
+      PackageName: "grpc"
+  - id: "interceptor_grpc_auth"
+    flag: 5
+    name: "interceptor_grpc_auth"
+    desc: "grpc拦截器之认证"
+    src: "interceptor_grpc_auth.go.tmpl"
+    dst: "internal/pkg/interceptor/grpc/auth.go"
+    params:
+      PackageName: "grpc"
+  - id: "interceptor_grpc_limiter"
+    flag: 5
+    name: "interceptor_grpc_limiter"
+    desc: "grpc拦截器之限流"
+    src: "interceptor_grpc_limiter.go.tmpl"
+    dst: "internal/pkg/interceptor/grpc/limiter.go"
+    params:
+      PackageName: "grpc"
+  # -----------------------proto-----------------------
   - id: "proto_google_api_annotations.proto"
     flag: 5
     name: "proto_google_api_annotations.proto"
@@ -376,6 +410,7 @@ templates:
       JaegerEnable: true
       JaegerServers:
         - "localhost:6831"
+      MetricsEnable: true
       DnsServerName: "dnsiyfiysi"
       KeystoreCA: "keystore/ca.crt"
       KeystorePublicKey: "keystore/grpc.crt"

@@ -1,0 +1,23 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+package {{.PackageName}}
+
+import (
+	"context"
+	"net/http"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/trace"
+)
+
+// Trace trace for http
+func Trace(
+	next func(w http.ResponseWriter, r *http.Request),
+) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.Background()
+		url := r.URL.String()
+		httpSpan, ctx := trace.StartTrace(ctx, url)
+		defer httpSpan.Finish()
+		r = r.WithContext(ctx)
+		next(w, r)
+	}
+}

@@ -1,0 +1,69 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+package {{.PackageName}}
+
+import (
+	"net/http"
+	"sync"
+)
+
+// httpMiddlewareFunc 中间件格式
+type httpMiddlewareFunc func(
+	next func(w http.ResponseWriter, r *http.Request),
+) func(w http.ResponseWriter, r *http.Request)
+
+var (
+	InterceptorMgrInstance *InterceptorMgrInstanceType
+	InterceptorOnce        sync.Once
+)
+
+//InterceptorMgr 拦截器管理实例
+func InterceptorMgr() *InterceptorMgrInstanceType {
+	InterceptorOnce.Do(func() {
+		InterceptorMgrInstance = &InterceptorMgrInstanceType{}
+		InterceptorMgrInstance.Init()
+		//go InterceptorMgrInstance.grLoop()
+	})
+	return InterceptorMgrInstance
+}
+
+//InterceptorMgr 拦截器
+type InterceptorMgrInstanceType struct {
+	chains []httpMiddlewareFunc
+	target http.HandlerFunc
+}
+
+//Init 初始化
+func (mgr *InterceptorMgrInstanceType) Init() {
+	mgr.chains = make([]httpMiddlewareFunc, 0)
+}
+
+// grLoop gr(暂时不用）
+func (mgr *InterceptorMgrInstanceType) grLoop() {
+
+}
+
+// Use 使用某个拦截器，其顺序是先进后用
+// 举例：
+//
+//	mgr.Use(Interceptor1)
+//	mgr.Use(Interceptor2)
+//	mgr.Use(Interceptor3)
+//	> Interceptor3(w, r)->Interceptor2(w, r)->Interceptor1(w, r)->ServeHTTP(w,r)
+func (mgr *InterceptorMgrInstanceType) Use(h httpMiddlewareFunc) *InterceptorMgrInstanceType {
+	mgr.chains = append(mgr.chains, h)
+	return mgr
+}
+
+//Handler 返回处理函数
+func (mgr *InterceptorMgrInstanceType) Handler(
+	h http.Handler,
+) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		last := h.ServeHTTP
+		for _, m := range mgr.chains {
+			last = m(last)
+		}
+		last(w, r)
+	}
+}

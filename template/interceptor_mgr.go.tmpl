@@ -1,53 +1,54 @@
 // gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
 
-
 package {{.PackageName}}
 
 import (
-	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	grpcZap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
-	grpcRecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	grpcRetry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
-	grpcOpentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
-	grpcPrometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/opentracing/opentracing-go"
-	"github.com/spf13/viper"
-	"google.golang.org/grpc"
-
-	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
-	"{{.Domain}}/{{.AppName}}/internal/pkg/trace"
+	grpcPB "google.golang.org/grpc"
+	"net/http"
+	"sync"
+	grpcInterceptor "{{.Domain}}/{{.AppName}}/internal/pkg/interceptor/grpc"
+	httpInterceptor "{{.Domain}}/{{.AppName}}/internal/pkg/interceptor/http"
 )
 
-// GetGatewayInterceptors all Unary interceptors for gateway
-func GetGatewayInterceptors() (interceptors grpc.UnaryClientInterceptor) {
-	interceptorList := make([]grpc.UnaryClientInterceptor, 0)
-	if viper.GetBool("jaeger.enable") {
-		//拦截器之链路追踪
-		interceptorList = append(interceptorList, trace.GatewayTracerClientInterceptor(opentracing.GlobalTracer()))
-	}
-	interceptorList = append(interceptorList, grpcZap.UnaryClientInterceptor(logger.GrpcLogger)) //拦截器之日志
-	interceptorList = append(interceptorList, grpcPrometheus.UnaryClientInterceptor)             //拦截器之监控
-	interceptorList = append(interceptorList, grpcRetry.UnaryClientInterceptor())                //拦截器之重试
-	interceptorList = append(interceptorList, ClientLimiterInterceptor())                        //限流
+var (
+	MgrInstance *MgrInstanceType
+	MgrOnce     sync.Once
+)
 
-	interceptors = grpcMiddleware.ChainUnaryClient(interceptorList...)
-	return
+//Mgr 拦截器管理实例
+func Mgr() *MgrInstanceType {
+	MgrOnce.Do(func() {
+		MgrInstance = &MgrInstanceType{}
+		MgrInstance.Init()
+	})
+	return MgrInstance
+}
+
+//Mgr 拦截器
+type MgrInstanceType struct {
+}
+
+//Init 初始化
+func (mgr *MgrInstanceType) Init() {
 }
 
 // GetServerInterceptors all interceptors for server
-func GetServerInterceptors() (interceptors grpc.UnaryServerInterceptor) {
-	interceptorList := make([]grpc.UnaryServerInterceptor, 0)
-	if viper.GetBool("jaeger.enable") {
-		//拦截器之链路追踪
-		interceptorList = append(interceptorList, grpcOpentracing.UnaryServerInterceptor(
-			grpcOpentracing.WithTracer(opentracing.GlobalTracer())))
-	}
-	interceptorList = append(interceptorList, grpcZap.UnaryServerInterceptor(logger.GrpcLogger))      //拦截器之日志
-	interceptorList = append(interceptorList, grpcPrometheus.UnaryServerInterceptor)                  //拦截器之监控
-	interceptorList = append(interceptorList, grpcAuth.UnaryServerInterceptor(BearerAuthInterceptor)) //拦截器之认证
-	interceptorList = append(interceptorList, grpcRecovery.UnaryServerInterceptor())                  //拦截器之恢复
+func (mgr *MgrInstanceType) GetServerInterceptors() (
+	interceptors grpcPB.UnaryServerInterceptor) {
+	return grpcInterceptor.InterceptorMgr().GetServerInterceptors()
+}
 
-	interceptors = grpcMiddleware.ChainUnaryServer(interceptorList...)
-	return
+// GetGatewayInterceptors all interceptors for gateway
+func (mgr *MgrInstanceType) GetGatewayInterceptors() (
+	interceptors grpcPB.UnaryClientInterceptor) {
+	return grpcInterceptor.InterceptorMgr().GetGatewayInterceptors()
+}
+
+// GetHttpInterceptors all interceptors for http
+func (mgr *MgrInstanceType) GetHttpInterceptors(h http.Handler,
+) func(w http.ResponseWriter, r *http.Request) {
+	httpInterceptor.InterceptorMgr().Use(httpInterceptor.Cors)
+	httpInterceptor.InterceptorMgr().Use(httpInterceptor.Trace)
+	httpInterceptor.InterceptorMgr().Use(httpInterceptor.Query)
+	return httpInterceptor.InterceptorMgr().Handler(h)
 }
