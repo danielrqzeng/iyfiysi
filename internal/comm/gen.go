@@ -249,8 +249,10 @@ func GenFile(baseDir string, fileConfig *ProjectFileType) (err error) {
 	if fileConfig.Params != nil {
 		params = fileConfig.Params
 	}
-	params["AppName"] = filepath.Base(baseDir)
-	params["Domain"] = "test.com"
+	domainStr, appName := filepath.Split(baseDir)
+	domainStr = filepath.Base(domainStr)
+	params["AppName"] = appName //filepath.Base(baseDir)
+	params["Domain"] = domainStr
 	params["CreateTime"] = time.Now()
 
 	tmplStr, err := GetTmpl(fileConfig.Src)
