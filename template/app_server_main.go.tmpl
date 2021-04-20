@@ -15,13 +15,39 @@ import (
 	"google.golang.org/grpc/naming"
 	"google.golang.org/grpc/reflection"
 	"net/http"
+	"sync"
 	"{{.Domain}}/{{.AppName}}/internal/app/server/service"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/governance"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/interceptor"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/trace"
 )
 
+var (
+	appSingleton *ApplicationType
+	appOnce      sync.Once
+)
+
+//Mgr 拦截器管理实例
+func App() *ApplicationType {
+	appOnce.Do(func() {
+		appSingleton = &ApplicationType{}
+		appSingleton.Init()
+	})
+	return appSingleton
+}
+
+//ApplicationType server app定义
+type ApplicationType struct {
+	serviceAddr string // 侦听地址，格式如：127.0.0.1:8000
+	metricAddr  string // 监控侦听地址，格式如：127.0.0.1:8000
+}
+
+//Init ...
+func (app *ApplicationType) Init() {
+}
+
 //GrpcServer ...
-func GrpcServer() (server *grpc.Server, err error) {
+func (app *ApplicationType) grpcServer() (server *grpc.Server, err error) {
 	interceptors := interceptor.Mgr().GetServerInterceptors()
 	server = grpc.NewServer(grpc.UnaryInterceptor(interceptors))
 
@@ -39,13 +65,17 @@ func GrpcServer() (server *grpc.Server, err error) {
 	return
 }
 
-
 //runGRPC grpc服务
-func runGRPC() (err error) {
+func (app *ApplicationType) runGRPC() (err error) {
 	instance, err := governance.GetSetupInstanceAddrByConfKey("server")
 	if err != nil {
 		return
 	}
+
+	// 将server的服务侦听地址设置到viper中（以备其他地方使用），key为listen
+	app.serviceAddr = instance
+	viper.Set("listen", app.serviceAddr)
+	trace.Init() // 对opentracing.GlobalTracer() 重新初始化，使得侦听实例在trace的tag中生效
 
 	//服务治理之注册
 	serviceKey := viper.GetString("etcd.serviceKey")
@@ -70,7 +100,7 @@ func runGRPC() (err error) {
 		return
 	}
 
-	server, err := GrpcServer()
+	server, err := app.grpcServer()
 	if err != nil {
 		return
 	}
@@ -94,7 +124,7 @@ func runGRPC() (err error) {
 }
 
 //runMetricsHTTP metric服务
-func runMetricsHTTP() {
+func (app *ApplicationType) runMetricsHTTP() {
 	if !viper.GetBool("metrics.enable") {
 		return
 	}
@@ -103,6 +133,8 @@ func runMetricsHTTP() {
 	if err != nil {
 		panic(err)
 	}
+	app.metricAddr = instance
+
 	metricsPath := viper.GetString("metrics.server.path")
 	httpMux := http.NewServeMux()
 	httpMux.Handle(metricsPath, promhttp.HandlerFor(
@@ -116,12 +148,12 @@ func runMetricsHTTP() {
 }
 
 //Run 启动
-func Run() (err error) {
+func (app *ApplicationType) Run() (err error) {
 	//metrics
-	go runMetricsHTTP()
+	go app.runMetricsHTTP()
 
 	//grpc
-	err = runGRPC()
+	err = app.runGRPC()
 	if err != nil {
 		return
 	}

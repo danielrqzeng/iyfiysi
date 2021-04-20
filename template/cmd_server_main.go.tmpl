@@ -9,16 +9,16 @@ import (
 	"os"
 	"strings"
 	"{{.Domain}}/{{.AppName}}/internal/app/server"
-	"{{.Domain}}/{{.AppName}}/internal/pkg/trace"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/conf"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/trace"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
 )
 
 //定义一个全局变量的命令行接收参数
 var (
 	etcdServerFlag = flag.String("etcd", "http://127.0.0.1:2379", `etcd server,split with "," if more than one etcd server`)
-	confKeyFlag    = flag.String("conf_key", "/{{.AppName}}/config/app.yaml", `etcd conf key`)
+	confKeyFlag    = flag.String("conf_key", "/voice/config/app.yaml", `etcd conf key`)
 	versionFlag    = flag.Bool("version", false, "print the current version")
 )
 
@@ -56,7 +56,8 @@ func main() {
 	defer utils.DeferWhenCoreDump()
 
 	initAll()
-	if err := server.Run(); err != nil {
+
+	if err := server.App().Run(); err != nil {
 		fmt.Println(err)
 	}
 }
