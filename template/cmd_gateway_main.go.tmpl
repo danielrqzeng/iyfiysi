@@ -11,6 +11,7 @@ import (
 	"{{.Domain}}/{{.AppName}}/internal/app/gateway"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/trace"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/conf"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/interceptor"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
 )
@@ -43,6 +44,7 @@ func initAll() {
 	//做各个部件的初始化
 	logger.Init()
 	utils.Init()
+	interceptor.Init()
 	trace.Init()
 }
 

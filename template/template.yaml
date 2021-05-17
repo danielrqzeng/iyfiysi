@@ -189,7 +189,7 @@ templates:
     flag: 5
     name: "interceptor"
     desc: "拦截器的初始化"
-    src: "model_init.go.tmpl"
+    src: "interceptor_init.go.tmpl"
     dst: "internal/pkg/interceptor/init.go"
     params:
       PackageName: "interceptor"
@@ -228,9 +228,17 @@ templates:
   - id: "interceptor_http_trace"
     flag: 5
     name: "interceptor_http_trace"
-    desc: "http拦截器的管理实例"
+    desc: "http拦截器之追踪"
     src: "interceptor_http_trace.go.tmpl"
     dst: "internal/pkg/interceptor/http/trace.go"
+    params:
+      PackageName: "http"
+  - id: "interceptor_http_metrics"
+    flag: 5
+    name: "interceptor_http_metrics"
+    desc: "http拦截器的之http监控数据收集"
+    src: "interceptor_http_metrics.go.tmpl"
+    dst: "internal/pkg/interceptor/http/metrics.go"
     params:
       PackageName: "http"
   - id: "interceptor_grpc_mgr"

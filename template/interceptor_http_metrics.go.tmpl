@@ -1,0 +1,64 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+package {{.PackageName}}
+
+import (
+	"bytes"
+	prom "github.com/prometheus/client_golang/prometheus"
+	"io/ioutil"
+	"net/http"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
+	"time"
+)
+
+var httpCounter *prom.CounterVec     // 统计总http数量
+var httpHistogram *prom.HistogramVec // 统计http耗时
+
+func Init() {
+	httpCounter = prom.NewCounterVec(
+		prom.CounterOpts{
+			Name: "gateway_http_total",
+			Help: "Total number of service http started on the server.",
+		},
+		[]string{"http_path", "http_method", "http_status"})
+	httpHistogram = prom.NewHistogramVec(
+		prom.HistogramOpts{
+			Name:    "http_handling_seconds",
+			Help:    "Histogram of response latency (seconds) of the http until it is finished by the application.",
+			Buckets: prom.DefBuckets,
+		},
+		[]string{"http_path"},
+	)
+	prom.MustRegister(httpCounter)
+	prom.MustRegister(httpHistogram)
+}
+
+// Metrics ...
+func Metrics(
+	next func(w http.ResponseWriter, r *http.Request),
+) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		begin := time.Now()
+
+		mw := &HttpInterceptorResponseWriter{w, http.StatusOK, 0, nil}
+		//get reader content
+		rBody, _ := ioutil.ReadAll(r.Body)
+		r.Body.Close()
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(rBody))
+
+		next(mw, r)
+
+		statusCode := mw.Status()
+
+		httpCounter.With(prom.Labels{
+			"http_path":   r.URL.String(),
+			"http_method": r.Method,
+			"http_status": utils.Num2Str(statusCode),
+		}).Inc()
+
+		elapsed := utils.Elasped(begin)
+		httpHistogram.With(prom.Labels{
+			"http_path": r.URL.String(),
+		}).Observe(float64(elapsed) / 1000) //单位为秒
+	}
+}

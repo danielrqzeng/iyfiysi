@@ -3,6 +3,7 @@
 package {{.PackageName}}
 
 import (
+    "github.com/spf13/viper"
 	grpcPB "google.golang.org/grpc"
 	"net/http"
 	"sync"
@@ -47,6 +48,9 @@ func (mgr *MgrInstanceType) GetGatewayInterceptors() (
 // GetHttpInterceptors all interceptors for http
 func (mgr *MgrInstanceType) GetHttpInterceptors(h http.Handler,
 ) func(w http.ResponseWriter, r *http.Request) {
+	if viper.GetBool("metrics.enable") {
+		httpInterceptor.InterceptorMgr().Use(httpInterceptor.Metrics)
+	}
 	httpInterceptor.InterceptorMgr().Use(httpInterceptor.Cors)
 	httpInterceptor.InterceptorMgr().Use(httpInterceptor.Trace)
 	httpInterceptor.InterceptorMgr().Use(httpInterceptor.Query)
