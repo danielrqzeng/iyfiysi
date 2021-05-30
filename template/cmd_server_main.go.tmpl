@@ -36,6 +36,7 @@ func initAll() {
 		*confKeyFlag,
 		func() {
 			viper.Set("updateAt", utils.Now())
+			conf.PrintConf()
 		})
 	if err != nil {
 		panic(err)

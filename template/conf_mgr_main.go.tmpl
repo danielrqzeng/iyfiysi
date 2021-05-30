@@ -8,11 +8,12 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"strings"
+	"gopkg.in/yaml.v2"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/governance"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
-	"time"
+	"strings"
+    "time"
 )
 
 // InitConfig 从本地文件confFile中初始化配置
@@ -86,6 +87,8 @@ func InitRemoteConfig(etcdAddrs []string,
 	if err != nil {
 		panic(err)
 	}
+	viper.Set("createAt", utils.Now())
+	PrintConf()
 	//监控
 	err = e.RunToWatch(cli,
 		configKey,
@@ -109,4 +112,12 @@ func InitRemoteConfig(etcdAddrs []string,
 		return
 	}
 	return
+}
+
+// PrintConf 将配置信息打印到日志中，默认是延后5s打印
+func PrintConf(){
+	time.AfterFunc(time.Second*time.Duration(5), func() {
+		byteConfInfo, _ := yaml.Marshal(viper.AllSettings())
+		logger.MainLogger.Error("\n"+string(byteConfInfo))
+	})
 }
