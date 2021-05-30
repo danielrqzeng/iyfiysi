@@ -72,6 +72,14 @@ templates:
     dst: "internal/pkg/conf/main.go"
     params:
       PackageName: "conf"
+  - id: "data"
+    flag: 5
+    name: "data"
+    desc: "data 共用数据结构"
+    src: "data.go.tmpl"
+    dst: "internal/pkg/data/data.go"
+    params:
+      PackageName: "data"
   - id: "utils_init"
     flag: 5
     name: "util_init"
@@ -120,6 +128,15 @@ templates:
     dst: "internal/pkg/utils/net_test.go"
     params:
       PackageName: "utils"
+  - id: "util_crypt"
+    flag: 5
+    name: "util_crypt"
+    desc: "crypt相关的工具类"
+    src: "util_crypt.go.tmpl"
+    dst: "internal/pkg/utils/crypt.go"
+    params:
+      PackageName: "utils"
+
   - id: "db_init"
     flag: 5
     name: "db_init"

@@ -4,8 +4,11 @@
 package {{.PackageName}}
 
 import (
+    "fmt"
 	"github.com/spf13/viper"
 	"go.uber.org/zap/zapcore"
+	"os"
+    "strings"
 )
 
 // Init 初始化，程序启动时候调用
@@ -27,11 +30,17 @@ func Init() {
 		"error":   zapcore.ErrorLevel,
 	}
 
+    pid := os.Getpid()
 	for _, lc := range loggerConfigs {
 		if _, ok := desc2level[lc.Level]; !ok {
 			panic("logger config err,unknow logger level=" + lc.Level + " for logger=" + lc.Name)
 		}
-		InitOneLogger(lc.Name, lc.File, desc2level[lc.Level])
+		logFile := lc.File
+        if strings.HasSuffix(lc.File, ".log") {
+        	base := strings.TrimSuffix(logFile, ".log")
+        	logFile = fmt.Sprintf("%s-%d.log", base, pid)
+        }
+		InitOneLogger(lc.Name, logFile, desc2level[lc.Level])
 	}
 }
 

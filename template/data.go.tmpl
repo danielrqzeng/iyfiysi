@@ -1,0 +1,10 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+
+package {{.PackageName}}
+
+//BaseResponse 通用回应
+type BaseResponse struct {
+	RetCode int32  `json:"retCode"` //0:成功，其他失败
+	RetMsg  string `json:"retMsg"`  //对retCode的描述
+}

@@ -36,7 +36,8 @@ func initAll() {
 		strings.Split(*etcdServerFlag, ","),
 		*confKeyFlag,
 		func() {
-			fmt.Println(viper.GetString("version"))
+			viper.Set("updateAt", utils.Now())
+
 		})
 	if err != nil {
 		panic(err)

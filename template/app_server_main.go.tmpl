@@ -135,6 +135,32 @@ func (app *ApplicationType) runMetricsHTTP() {
 	}
 	app.metricAddr = instance
 
+
+	//注册-监控主键
+	e := &governance.EtcdType{}
+	cli, err := governance.DefaultEtcdV3Client()
+	if err != nil {
+		panic(err)
+	}
+	metricKey := viper.GetString("etcd.metricKey") + "/server/" + instance
+	err = e.RunToKeepAlive(cli, metricKey,
+		func(leaseID clientv3.LeaseID) {
+			ops := clientv3.WithLease(leaseID)
+			_, err := cli.Put(context.TODO(), metricKey, instance, ops)
+			if err != nil {
+				panic(fmt.Sprintf("RunToKeepAlive key=%s err,err=%s", metricKey, err.Error()))
+			}
+		},
+		func(code int, msg string) {
+			panic(fmt.Sprintf("RunToKeepAlive key=%s err,code=%d,msg=%s", metricKey, code, msg))
+		})
+
+	if err != nil {
+		panic(fmt.Sprintf("RunToKeepAlive key=%s err,err=%s", metricKey, err.Error()))
+		return
+	}
+
+
 	metricsPath := viper.GetString("metrics.server.path")
 	httpMux := http.NewServeMux()
 	httpMux.Handle(metricsPath, promhttp.HandlerFor(

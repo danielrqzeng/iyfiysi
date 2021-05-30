@@ -1,0 +1,77 @@
+// gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+// 针对各种加密操作的包装
+package {{.PackageName}}
+
+import (
+	"crypto/hmac"
+	"crypto/md5"
+	"crypto/sha1"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
+	"github.com/spaolacci/murmur3"
+)
+
+//Md5sum md5sum
+func Md5sum(data []byte) string {
+	h := md5.New() //#nosec
+	_, err := h.Write(data)
+	if err != nil {
+		return ""
+	}
+	d := hex.EncodeToString(h.Sum(nil))
+	return d
+}
+
+
+func Sha1sum(data []byte) string {
+	h := sha1.New()
+	h.Write(data)
+	d := hex.EncodeToString(h.Sum(nil))
+	return d
+}
+func Sha256sum(data []byte) string {
+	h := sha256.New()
+	h.Write(data)
+	d := hex.EncodeToString(h.Sum(nil))
+	return d
+}
+
+func HmacSha1(data []byte, key string) []byte {
+	m := hmac.New(sha1.New, []byte(key))
+	m.Write([]byte(data))
+	return m.Sum(nil)
+}
+
+func HmacSha256(data []byte, key string) []byte {
+	m := hmac.New(sha256.New, []byte(key))
+	m.Write([]byte(data))
+	return m.Sum(nil)
+}
+
+func Base64Encode(data []byte) (str string) {
+	str = base64.StdEncoding.EncodeToString(data)
+	return
+}
+
+func MurMurHash32(str string) (val uint32) {
+	m := murmur3.New32()
+	_, _ = m.Write([]byte(str))
+	val = m.Sum32()
+	return
+}
+
+func MurMurHash64(str string) (val uint64) {
+	m := murmur3.New64()
+	_, _ = m.Write([]byte(str))
+	val = m.Sum64()
+	return
+}
+
+func MurMurHash128(str string) (v1 uint64, v2 uint64) {
+	m := murmur3.New128()
+	_, _ = m.Write([]byte(str))
+	v1, v2 = m.Sum128()
+	return
+}

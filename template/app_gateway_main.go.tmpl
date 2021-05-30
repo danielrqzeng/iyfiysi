@@ -3,7 +3,10 @@
 package {{.PackageName}}
 
 import (
+    "encoding/json"
+    "fmt"
 	"context"
+	"github.com/coreos/etcd/clientv3"
 	etcdNaming "github.com/coreos/etcd/clientv3/naming"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -11,9 +14,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 	"net/http"
 	"sync"
 	"{{.Domain}}/{{.AppName}}/internal/app/gateway/service"
+	"{{.Domain}}/{{.AppName}}/internal/pkg/data"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/governance"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/interceptor"
 	grpcInterceptor "{{.Domain}}/{{.AppName}}/internal/pkg/interceptor/grpc"
@@ -45,9 +50,32 @@ type ApplicationType struct {
 func (app *ApplicationType) Init() {
 }
 
+
+//OnProtoErrorHandlerFunc pb方法报错时候，进入此处处理
+func OnProtoErrorHandlerFunc(
+	ctx context.Context,
+	mux *runtime.ServeMux,
+	marshaler runtime.Marshaler,
+	w http.ResponseWriter,
+	request *http.Request, e error) {
+
+	//"rpc error: code = Unknown desc = not valid link"
+	grpcErr := status.Convert(e)
+
+	rsp := &data.BaseResponse{}
+	rsp.RetCode = -1
+	rsp.RetMsg = grpcErr.Message()
+	byteStr, err := json.Marshal(rsp)
+
+	if err == nil {
+		w.Write(byteStr)
+	}
+	return
+}
+
 //grpcServer ...
 func (app *ApplicationType) grpcServer() (gwMux *runtime.ServeMux) {
-	gwMux = runtime.NewServeMux()
+	gwMux = runtime.NewServeMux(runtime.WithProtoErrorHandler(OnProtoErrorHandlerFunc))
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -130,6 +158,33 @@ func (app *ApplicationType) runMetricsHTTP() {
 		panic(err)
 	}
 	app.metricAddr = instance
+
+
+	//注册-监控主键
+	e := &governance.EtcdType{}
+	cli, err := governance.DefaultEtcdV3Client()
+	if err != nil {
+		panic(err)
+	}
+	metricKey := viper.GetString("etcd.metricKey") + "/gateway/" + instance
+	err = e.RunToKeepAlive(cli, metricKey,
+		func(leaseID clientv3.LeaseID) {
+			ops := clientv3.WithLease(leaseID)
+			_, err := cli.Put(context.TODO(), metricKey, instance, ops)
+			if err != nil {
+				panic(fmt.Sprintf("RunToKeepAlive key=%s err,err=%s", metricKey, err.Error()))
+			}
+		},
+		func(code int, msg string) {
+			panic(fmt.Sprintf("RunToKeepAlive key=%s err,code=%d,msg=%s", metricKey, code, msg))
+		})
+
+	if err != nil {
+		panic(fmt.Sprintf("RunToKeepAlive key=%s err,err=%s", metricKey, err.Error()))
+		return
+	}
+
+
 	metricsPath := viper.GetString("metrics.gateway.path")
 	HTTPMux := http.NewServeMux()
 	HTTPMux.Handle(metricsPath, promhttp.HandlerFor(
@@ -139,6 +194,10 @@ func (app *ApplicationType) runMetricsHTTP() {
 
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
 	err = http.ListenAndServe(instance, HTTPMux)
+	if err != nil {
+    	panic(fmt.Sprintf("ListenAndServe metric fail,instance=%s,err=%s", instance, err.Error()))
+    	return
+    }
 	return
 }
 

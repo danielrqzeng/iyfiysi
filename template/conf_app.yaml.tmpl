@@ -4,6 +4,9 @@ app: "{{.AppName}}"
 version: "{{.Version}}" # 版本，由于服务治理是基于app/version作为前缀key的，是以若是提供一样的服务，可以不变，否则变之
 token: "7625C007783D1B09F2522E3F0A533404" # gateway->server调用认证
 limit: 1000
+#listen: "127.0.0.1:100" #此配置将会在每个服务找到可侦听端口之后，由进程自己设置，代表其在此端口提供服务
+createAt: 0 # 本文件创建时间，服务启动时候赋值
+updateAt: 0 # 本文件最近一次修改时间，当配置修改时候，变动之
 
 # 服务启动会根据ip和port自己寻找合适的ip和端口使用来启动服务
 # 先从ignoreIP列表中过滤掉不用的ip，再根据potentialIP次第寻找可用ip
@@ -55,7 +58,8 @@ metrics:
 # etcd,不支持即改即生效
 etcd:
   enable: {{.EtcdEnable}} #是否开启etcd服务，目前只能开启
-  serviceKey: "/{{.AppName}}/{{.Version}}" #注册服务时候的key
+  metricKey: "/{{.AppName}}/metric/{{.Version}}" #服务监控的key
+  serviceKey: "/{{.AppName}}/service/{{.Version}}" #注册服务的key
   etcdServer:
 {{- range $EtcdServer := .EtcdServers}}
     - "{{$EtcdServer}}"
@@ -79,7 +83,7 @@ keystore:
 # 日志信息,不支持即改即生效
 logger:
   - name: "main" #主日志
-    file: "./logs/main.log"
+    file: "./logs/main.log" #运行时将会加入进程id组成日志文件，日志实际名称为./logs/main-{pid}.log
     level: "debug" #debug|info|warning|error
   - name: "http" #审计日志
     file: "./logs/http.log"
@@ -94,5 +98,5 @@ logger:
     file: "./logs/grpc.log"
     level: "debug"
 
-snowflakeNodeID: 0 #snowflake需要的node参数
+snowflakeNodeID: 0 #snowflake需要的node参数(进程读取了配置好，此参数由listen作为node参数启动)
 # end
