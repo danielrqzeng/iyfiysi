@@ -464,6 +464,24 @@ templates:
     dst: "../internal/app/server/service/"
     params:
       PackageName: "service"
+  # 监控相关
+  - id: "metric_confd_conf"
+    flag: 5
+    name: "metric_confd_conf"
+    desc: "confd的配置文件"
+    src: "metric_confd_conf.toml.tmpl"
+    dst: "metric/confd/conf.d/confd.toml"
+    params:
+      TempFile: "confd_yaml.tmpl" #对应 metric_confd_tmpl.dst
+      DestPath: "${PATH_TO_PROMETHEUS}/config/file_sd"
+  - id: "metric_confd_tmpl"
+    flag: 5
+    name: "metric_confd_tmpl"
+    desc: "confd的模板文件"
+    src: "metric_confd_yaml.tmpl.tmpl"
+    dst: "metric/confd/templates/confd_tmpl.tmpl"
+    params:
+      Value: "{{.Value}}"
 
 #自签名证书
 keystore:

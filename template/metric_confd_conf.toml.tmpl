@@ -1,0 +1,9 @@
+# gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+# confd config file for {{.Domain}}/{{.AppName}}
+
+[template]
+src = "{{.TempFile}}" # templates/{{.TempFile}}
+dest = "{{.DestPath}}/{{.AppName}}.yaml"
+keys = [
+    "/{{.AppName}}/metric",
+]
