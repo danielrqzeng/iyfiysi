@@ -22,6 +22,28 @@
 
 ---
 
+### 服务治理
+
+### 链路追踪
+* 路径：`pkg/trace`
+* 使用的是jeager组件，可以关闭，默认是开启
+* 链路追踪包含
+    * 请求路径
+    * 请求耗时
+    * 其他组件追踪（函数追踪，db追踪，cache追踪)
+
+
+### 中间件（拦截器）
+* 路径：`pkg/intercepor`
+* 使用的组件有两个方面
+    * grpcgateway官方提供的常用组件
+    * 自定义组件
+
+* 使用的是jeager组件，可以关闭，默认是开启
+* 链路追踪包含
+    * 请求路径
+    * 请求耗时
+    * 其他组件追踪（函数追踪，db追踪，cache追踪)
 
 ### 监控
 监控主要分为三个部分(此处假设已经启动了grafana和prometheus)
@@ -104,8 +126,30 @@ go_threads：线程
 ```
 ##### 请求
 * 分每个server(服务器，不是服务），统计某段时间平均请求数量:`sum(rate(grpc_server_handled_total{job=~"iyfiysi.*"}[$__interval])) by (instance)`
-* 对每个方法，统计其请求排行
+
+* 对每个方法，统计其请求排行:(X)
+`sum(rate(grpc_server_handled_total{job=~"iyfiysi.*"}[$__interval])) by (grpc_method)`
+
+`sum(rate(grpc_server_started_total{job=~"iyfiysi.*"}[1m])) by (grpc_method)`
+
+`topk(10, sort_desc(sum(grpc_server_handled_total) by (grpc_method)))`
 * 分每个方法，统计其qps
+    * 总qps：`sum(rate(grpc_server_handled_total{job=~"iyfiysi.*"}[$__interval])) by (grpc_method)`
+    * 时均错误请求：`sum(rate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_code!="OK"}[$__interval])) by (grpc_method)`
+    * 时均成功请求：`sum(rate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_code="OK"}[$__interval])) by (grpc_method)`
 * 分每个方法，统计其耗时（tp耗时）
+    * histogram_quantile(0.99,sum(rate(grpc_server_handling_seconds_bucket{job=~"iyfiysi.*",grpc_type="unary"}[$__interval])) by (grpc_method,le))
+    * histogram_quantile(0.90,sum(rate(grpc_server_handling_seconds_bucket{job=~"iyfiysi.*",grpc_type="unary"}[$__interval])) by (grpc_method,le))
+    * histogram_quantile(0.75,sum(rate(grpc_server_handling_seconds_bucket{job=~"iyfiysi.*",grpc_type="unary"}[$__interval])) by (grpc_method,le))
+    * histogram_quantile(0.50,sum(rate(grpc_server_handling_seconds_bucket{job=~"iyfiysi.*",grpc_type="unary"}[$__interval])) by (grpc_method,le))
+    > lagend: {{grpc_method}}-tp50
 * 分每个方法，统计成功率
+sum(irate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_type="unary",grpc_code!="OK"}[$__interval])) by (grpc_method)
+
+错误率：
+sum(rate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_type="unary",grpc_code!="OK"}[$__interval])) by (grpc_method)
+ / 
+sum(rate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_type="unary"}[$__interval])) by (grpc_method)
+ * 100.0
 * 对错误码，统计数量
+sum(rate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_type="unary",grpc_code!="OK"}[$__interval])) by (grpc_method,grpc_code)
