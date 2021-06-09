@@ -11,15 +11,25 @@
 * `go get github.com/RQZeng/iyfiysi`
 * `go mod download`
 * 在linux系统中安装`sh build.sh`
+### 项目生成逻辑
+![](https://i0.hdslb.com/bfs/album/e5af3a3404ea5b34b182a6d27aa887750eb73d6c.png)
+### 服务生成逻辑
+![](https://www.hualigs.cn/image/60c0aeb81bc99.jpg)
 ### 3.创建项目
+* 项目名称由组织和项目名称构成，此处这名称非常重要，iyfiysi产生的很多[标识]()都是基于此名称
 * `cd /data/project`
-* `iyfiysi new -n test.com -a test`:项目将会构建在目录`/data/project/test.com/test`中
+* 项目初始化：`iyfiysi new -n test.com -a test`
+    * 组织名称为：test.com
+    * 项目名称为：test
+    * 项目生成于`/data/project/test.com/test`
 * 启动etcd
 * 编译项目`cd /data/project/test.com/test`;`sh build.sh`
 * 运行
     * `./test_server`
     * `./test_gateway`
 
+### 服务架构
+![](https://www.hualigs.cn/image/60c0ae1f09bf5.jpg)
 ---
 
 ### 服务治理
@@ -45,111 +55,220 @@
     * 请求耗时
     * 其他组件追踪（函数追踪，db追踪，cache追踪)
 
-### 监控
-监控主要分为三个部分(此处假设已经启动了grafana和prometheus)
-#### 机器监控
-* 使用node_exporter对机器进行监控
-* 此处使用版本为[node_exporter `0.18.1`](https://github.com/prometheus/node_exporter/releases/download/v0.18.1/node_exporter-0.18.1.linux-amd64.tar.gz)
-* 配置prometheus中的pull配置如下
-    ```yaml
-    scrape_configs:
-        ...
+---
+### [监控]()
+* 监控使用的是[prometheus]()作为数据收集和[grafana]()作为数据展示和管理
+* 监控是可选的，通过控制开关来控制是否开启,默认是关闭
+* 监控分为三个维度，分别是：
+    * [机器监控]()：对机器的指标进行监控，cpu,mem,io等
+    * [进程监控]()：通过进程名，对某些进程进行监控，cpu,mem,io等指标
+    * [业务监控]()：对业务进行监控，比如业务的qps，耗时等等
+#### 基础概念
+* 指标源：产生和提供指标的服务进程，一般指各种exporter，各种业务服务器等
+* 指标收集服务器：此处是prometheus
+* prometheus是通过定时向指标源拉取的方式获取指标，并且保存展示
 
-        - job_name: "node"
-          static_configs:
-          - targets: ["172.30.0.14:9100"]
+指标系统构成
+    ![指标系统构成](https://www.hualigs.cn/image/60c09a9aa5bfc.jpg)
 
+
+#### 监控安装
+* 启动**prometheus**和**grafana**服务
+    * 此处简单演示下怎么启动prometheus服务，是以用一个docker启动起来（需要先准备好docker和docker-compose）,若是已经有了这两个服务，请忽略此步骤，准备好入口即可
+    * 假设我们部署服务在机器`129.28.162.42/172.30.0.14`,目录`/data/docker/metrics`(使用者替换成自己的ip以使用之)
+    * 最终部署文件目录
+        ```sh
+        [root@VM_0_14_centos metrics]# tree -L 3
+        .
+        |-- docker-compose.yml
+        |-- grafana
+        |   |-- config
+        |   |   `-- grafana.ini # grafana的启动文件，此文件使用默认即可，然后修改下登录的账号密码
+        |   |-- data
+        |   `-- plugins
+        `-- prometheus
+            |-- config
+            |   |-- file_sd #此目录是指标目标，包含机器，进程，业务等提供指标的实例
+            |   `-- prometheus.yml # prometheus的启动文件
+            `-- data
+        ```
+    * docker-compose文件
+        ```yaml
+        # /data/docker/metrics/docker-compose.yml
+        version: '2'
+
+        networks:
+          monitor:
+            driver: bridge
+
+        services:
+          prometheus:
+            image: prom/prometheus:latest
+            container_name: prometheus
+            hostname: prometheus
+            restart: always
+            volumes:
+              - /data/docker/metrics/prometheus/config:/etc/prometheus
+              - /data/docker/metrics/prometheus/data:/prometheus
+            ports:
+              - "9091:9091"
+            expose:
+              - "8086"
+            command:
+              - '--config.file=/etc/prometheus/prometheus.yml' #docker中的配置文件
+              - '--log.level=info'
+              - '--web.listen-address=0.0.0.0:9091' #服务接口
+              - '--storage.tsdb.path=/prometheus'
+              - '--storage.tsdb.retention=15d' #保存15天
+              - '--query.max-concurrency=50'
+            networks:
+              - monitor
+
+          grafana:
+            image: grafana/grafana:7.5.3
+            container_name: grafana
+            restart: always
+            volumes:
+              - /data/docker/metrics/grafana/config/grafana.ini:/etc/grafana/grafana.ini
+            ports:
+              - "3000:3000"
+              - "25:25"
+            networks:
+              - monitor
+            depends_on:
+              - prometheus
+        ```
+        > 由上面配置我们可以得知
+        > * prometheus的地址为：`${out_ip}:9091`
+        > * grafana的数据源为:`http://prometheus:9091`
+        > * grafana的管理后台为:`${out_ip}:3000`
+    * grafana的配置文件
+        ```ini
+        # grafana/config/grafana.ini
         ...
-    ```
-* 其中的targets为我们将要启动的nod-exportor的服务端口，其默认提供的metric服务为`http://172.30.0.14:9100/metrics`
-* 将node_exportor启动即可`nohup ./node_exporter >/dev/null 2>&1 &`
-* 在grafana中导入dashbord,导入以下路径即可`https://grafana.com/grafana/dashboards/8919`
+        [server]
+        domain = 129.28.162.42
+        root_url = %(protocol)s://%(domain)s:%(http_port)s/
+        [security]
+        admin_user = admin
+        admin_password = a2zone2ten
+        ...
+        ```
+        > 以上可知，grafana的后台管理地址为`129.28.162.42:3000`(129.28.162.42为部署机器的外网ip，根据自己机器变更之)
+        > 登录的账号密码为`admin/a2zone2ten`
+    * prometheus的配置文件
+        ```yaml
+        # prometheus/config/prometheus.yml
+        #my global config
+        global:
+          scrape_interval:     15s 
+          evaluation_interval: 15s 
+
+        #Alertmanager configuration
+        alerting:
+          alertmanagers:
+          - static_configs:
+            - targets:
+              #- alertmanager:9093
+
+        #Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+        rule_files:
+          #- "first_rules.yml"
+          #- "second_rules.yml"
+
+        #A scrape configuration containing exactly one endpoint to scrape:
+        #Here it's Prometheus itself.
+        scrape_configs:
+          #The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+          - job_name: 'prometheus'
+            static_configs:
+            - targets: ['localhost:9091']
+
+          - job_name: 'iyfiysi'
+            scrape_interval: 5s
+            scheme: http
+            tls_config:
+              insecure_skip_verify: true
+            file_sd_configs:
+            - files:
+                - /etc/prometheus/file_sd/*.yaml
+              refresh_interval: 10s
+        ```
+    * 启动：`docker-compose up`
+* 启动[机器监控]()
+    * 下面实例中，是运行在linux机器的，[其他环境下载地址](https://github.com/prometheus/node_exporter/releases/)
+    * 机器监控，使用的是[node_exporter](https://github.com/prometheus/node_exporter/releases/download/v0.18.1/node_exporter-0.18.1.linux-amd64.tar.gz)
+    * 解压后启动启动：`nohup ./node_exporter --web.listen-address=":9100" >/dev/null 2>&1 &`
+        > 以上启动命令，可知此指标源的地址是`XXX.XXX.XXX.XXX:9100`
+    * 添加指标源配置至prometheus的指标源文件目录
+        ```yaml
+        # /data/docker/metrics/prometheus/config/file_sd/node.yaml
+        # gen by iyfiysi at 2021 Jun 03
+        - labels:
+            project: "/qq.com/test" #修改为org/project的形式
+            role: "node"                         
+          targets:
+            - "172.30.0.14:9100" #修改为node_exporter侦听地址
+        ```
+* 启动[进程监控]()
+    * 下面实例中，是运行在linux机器的，[其他环境下载地址](https://github.com/ncabatoff/process-exporter/releases)
+    * 机器监控，使用的是[process-exporter](https://github.com/ncabatoff/process-exporter/releases/download/v0.7.5/process-exporter-0.7.5.linux-amd64.tar.gz)
+    * 启动配置
+        ```yaml
+        process_names:
+            - comm:
+              - test_gateway
+              - test_server
+        ```
+    * 解压后启动启动：`nohup ./process-exporter -config.path process.yml -web.listen-address=":9256" >/dev/null 2>&1 & `
+        > 以上启动命令，可知此指标源的地址是`XXX.XXX.XXX.XXX:9256`
+    * 添加指标源配置至prometheus的指标源文件目录
+        ```yaml
+        # /data/docker/metrics/prometheus/config/file_sd/process.yaml
+        # gen by iyfiysi at 2021 Jun 03
+        - labels:
+            project: "/qq.com/test" #修改为org/project的形式
+            role: "process"                         
+          targets:
+            - "172.30.0.14:9256" #修改为node_exporter侦听地址
+        ```
+* 启动[业务监控]()
+    * 由于业务服务器启动多少是根据业务而定，是以其势必会有业务服务器乱启动，乱关停
+    * 通过服务发现，将当前运行业务服务器找到，并且告知prometheus这些指标源
+    * 使用[confd](https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-amd64)，通过获取ectd中注册的业务服务器，来生成业务服务器的指标源
+    * 启动配置已经由iyfiysi新建项目时候生成
+        ```sh
+        [root@VM_0_14_centos test]# tree metric/confd/
+        metric/confd/
+        |-- conf.d
+        |   `-- confd.toml
+        |-- s.sh
+        `-- templates
+            `-- confd_tmpl.tmpl
+        ```
+    * 将生成目录修正为prometheus的指标源文件目录
+        ```yaml
+        # gen by iyfiysi at 2021 Jun  03
+        # confd config file for qq.com/test
+
+        [template]
+        src = "confd_tmpl.tmpl" # templates/
+        #dest = "${PATH_TO_PROMETHEUS}/config/file_sd/test.yaml" # @TODO 此处修改为prometheus的指标源文件目录
+        dest = "/data/docker/metrics/prometheus/config/file_sd/test.yaml"
+        keys = [
+            "/test/metric",
+        ]
+        ```
+    * 启动服务`sh s.sh`
+* 指标展示grafana
+    * 导入数据源`http://prometheus:9091`
+    * 导入dashbord配置文件，其是有iyfiysi生成于`metric/grafana`
+        * node.json：机器监控dashboard，[来源](https://grafana.com/grafana/dashboards/8919)
+        * process.json: 进程监控dashboard，[来源](https://grafana.com/grafana/dashboards/249)
+        * iyfiysi.json: 业务监控dashbord
+    * 效果展示之-机器监控
     ![效果图](https://i.loli.net/2021/04/14/xP7D9bS16fFopkn.png)
-#### 进程监控
-* 使用process_exporter对某些进程进行监控
-* 此处使用版本为[process_exporter `0.7.5`](https://github.com/ncabatoff/process-exporter/releases/download/v0.7.5/process-exporter-0.7.5.linux-amd64.tar.gz)
-* 配置prometheus中的pull配置如下
-    ```yaml
-    scrape_configs:
-        ...
-
-        - job_name: "process"
-          static_configs:
-          - targets: ["172.30.0.14:9256"]
-
-        ...
-    ```
-* 其中的targets为我们将要启动的process_exportor的服务端口，其默认提供的metric服务为`http://172.30.0.14:9256/metrics`
-* process-exportor本身的配置（即指明要监控那些进程，此处假设要监控的进程名称为voice_gateway和voice_server）
-    ```yaml
-    # process.yml
-    process_names:
-    - comm:
-      - voice_gateway
-      - voice_server    
-    ```
-* 将process-exportor启动即可`nohup ./process-exporter -config.path process.yml >/dev/null 2>&1 &`
-* 在grafana中导入dashbord,导入以下路径即可`https://grafana.com/grafana/dashboards/249`
+    * 效果展示之-进程监控
     ![效果图](https://i.loli.net/2021/04/15/YfN3r4JdV1ceX9o.png)
-#### 服务监控
-##### go本身监控
-* 监控go_goroutines的数量变化：`go_goroutines{job=~"iyfiysi.*"}`
-* 在用内存变化:`process_resident_memory_bytes{job=~"iyfiysi.*"}`
-```json
-go_gc_duration_seconds：持续时间秒
-go_gc_duration_seconds_sum：gc-持续时间-秒数-总和
-go_memstats_alloc_bytes：Go内存统计分配字节
-go_memstats_alloc_bytes_total：Go内存统计分配字节总数
-go_memstats_buck_hash_sys_bytes：用于剖析桶散列表的堆空间字节
-go_memstats_frees_total：内存释放统计
-go_memstats_gc_cpu_fraction：垃圾回收占用服务CPU工作的时间总和
-go_memstats_gc_sys_bytes：圾回收标记元信息使用的内存字节
-go_memstats_heap_alloc_bytes：服务分配的堆内存字节数
-go_memstats_heap_idle_bytes：申请但是未分配的堆内存或者回收了的堆内存（空闲）字节数
-go_memstats_heap_inuse_bytes：正在使用的堆内存字节数
-go_memstats_heap_objects：堆内存块申请的量
-go_memstats_heap_released_bytes：返回给OS的堆内存
-go_memstats_heap_sys_bytes：系统分配的作为运行栈的内存
-go_memstats_last_gc_time_seconds：垃圾回收器最后一次执行时间
-go_memstats_lookups_total：被runtime监视的指针数
-go_memstats_mallocs_total：服务malloc的次数
-go_memstats_mcache_inuse_bytes：mcache结构体申请的字节数(不会被视为垃圾回收)
-go_memstats_mcache_sys_bytes：操作系统申请的堆空间用于mcache的字节数
-go_memstats_mspan_inuse_bytes：用于测试用的结构体使用的字节数
-go_memstats_mspan_sys_bytes：系统为测试用的结构体分配的字节数
-go_memstats_next_gc_bytes：垃圾回收器检视的内存大小
-go_memstats_other_sys_bytes：golang系统架构占用的额外空间
-go_memstats_stack_inuse_bytes：正在使用的栈字节数
-go_memstats_stack_sys_bytes：系统分配的作为运行栈的内存
-go_memstats_sys_bytes：服务现在系统使用的内存
-go_threads：线程
-```
-##### 请求
-* 分每个server(服务器，不是服务），统计某段时间平均请求数量:`sum(rate(grpc_server_handled_total{job=~"iyfiysi.*"}[$__interval])) by (instance)`
-
-* 对每个方法，统计其请求排行:(X)
-`sum(rate(grpc_server_handled_total{job=~"iyfiysi.*"}[$__interval])) by (grpc_method)`
-
-`sum(rate(grpc_server_started_total{job=~"iyfiysi.*"}[1m])) by (grpc_method)`
-
-`topk(10, sort_desc(sum(grpc_server_handled_total) by (grpc_method)))`
-* 分每个方法，统计其qps
-    * 总qps：`sum(rate(grpc_server_handled_total{job=~"iyfiysi.*"}[$__interval])) by (grpc_method)`
-    * 时均错误请求：`sum(rate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_code!="OK"}[$__interval])) by (grpc_method)`
-    * 时均成功请求：`sum(rate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_code="OK"}[$__interval])) by (grpc_method)`
-* 分每个方法，统计其耗时（tp耗时）
-    * histogram_quantile(0.99,sum(rate(grpc_server_handling_seconds_bucket{job=~"iyfiysi.*",grpc_type="unary"}[$__interval])) by (grpc_method,le))
-    * histogram_quantile(0.90,sum(rate(grpc_server_handling_seconds_bucket{job=~"iyfiysi.*",grpc_type="unary"}[$__interval])) by (grpc_method,le))
-    * histogram_quantile(0.75,sum(rate(grpc_server_handling_seconds_bucket{job=~"iyfiysi.*",grpc_type="unary"}[$__interval])) by (grpc_method,le))
-    * histogram_quantile(0.50,sum(rate(grpc_server_handling_seconds_bucket{job=~"iyfiysi.*",grpc_type="unary"}[$__interval])) by (grpc_method,le))
-    > lagend: {{grpc_method}}-tp50
-* 分每个方法，统计成功率
-sum(irate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_type="unary",grpc_code!="OK"}[$__interval])) by (grpc_method)
-
-错误率：
-sum(rate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_type="unary",grpc_code!="OK"}[$__interval])) by (grpc_method)
- / 
-sum(rate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_type="unary"}[$__interval])) by (grpc_method)
- * 100.0
-* 对错误码，统计数量
-sum(rate(grpc_client_handled_total{job=~"iyfiysi.*",grpc_type="unary",grpc_code!="OK"}[$__interval])) by (grpc_method,grpc_code)
+    * 效果展示之-业务监控
+    ![效果图](https://www.hualigs.cn/image/60c0ad8104fe3.jpg)
