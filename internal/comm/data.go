@@ -20,6 +20,7 @@ type ProjectFileType struct {
 	Name   string                 `json:"name"`   //名称
 	Desc   string                 `json:"desc"`   //描述
 	Src    string                 `json:"src"`    //对应哪个template文件
+	Delims string                 `json:"delims"` //template文件对应的分割符，空代表使用默认的
 	Dst    string                 `json:"dst"`    //生成之后放在那个文件
 	Params map[string]interface{} `json:"params"` //参数，kv格式
 }

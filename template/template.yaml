@@ -482,6 +482,15 @@ templates:
     dst: "metric/confd/templates/confd_tmpl.tmpl"
     params:
       Value: "{{.Value}}"
+  - id: "metric_grafana_iyfiysi_tmpl"
+    flag: 5
+    name: "metric_grafana_iyfiysi_tmpl"
+    desc: "grafana的dashboard文件"
+    src: "metric_grafana_iyfiysi.json.tmpl"
+    delims: "{{{,}}}"
+    dst: "metric/grafana/iyfiysi.json"
+    params:
+
 
 #自签名证书
 keystore:

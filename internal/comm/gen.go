@@ -48,7 +48,8 @@ func GetTmpl(tmplName string) (tmplStr string, err error) {
 
 //DoWriteFileOption 写入文件时候，带的参数
 type DoWriteFileOption struct {
-	DoFormat bool //是否做格式化，true:yes
+	DoFormat bool   //是否做格式化，true:yes
+	Delims   string //模板分隔符，如果是空，则默认为{{}}
 }
 
 //Option 选项内容
@@ -58,6 +59,13 @@ type Option func(msg *DoWriteFileOption)
 func DoFormat() Option {
 	return func(m *DoWriteFileOption) {
 		m.DoFormat = true
+	}
+}
+
+//DoDelims 选项-分隔符
+func DoDelims(delim string) Option {
+	return func(m *DoWriteFileOption) {
+		m.Delims = delim
 	}
 }
 
@@ -78,9 +86,16 @@ func DoWriteFile(tmplStr string, params interface{}, absFile string, opts *DoWri
 		panic("open file=" + absFile + " failed err:" + err.Error())
 		return
 	}
-
 	// 创建模板对象, parse关联模板
-	tmpl := template.Must(template.New(util.Md5sum([]byte(tmplStr))).Parse(tmplStr))
+	tmpl := template.New(util.Md5sum([]byte(tmplStr)))
+	if opts.Delims != "" {
+		delims := strings.Split(opts.Delims, ",")
+		if len(delims) != 2 {
+			panic("id=" + absFile + " err for delims=" + opts.Delims)
+		}
+		tmpl.Delims(delims[0], delims[1])
+	}
+	tmpl = template.Must(tmpl.Parse(tmplStr))
 	err = tmpl.Execute(targetWriter, params)
 	if err != nil {
 		return
@@ -260,9 +275,9 @@ func GenFile(baseDir string, fileConfig *ProjectFileType) (err error) {
 		return
 	}
 
-	opts := NewDoWriteFileOption()
-	if strings.HasSuffix(absFile, ".go") {
-		opts = NewDoWriteFileOption(DoFormat())
+	opts := NewDoWriteFileOption(DoDelims(fileConfig.Delims))
+	if strings.HasSuffix(absFile, ".go") && fileConfig.Delims != "" {
+		opts = NewDoWriteFileOption(DoFormat(), DoDelims(fileConfig.Delims))
 	}
 	err = DoWriteFile(tmplStr, params, absFile, opts)
 	if err != nil {
