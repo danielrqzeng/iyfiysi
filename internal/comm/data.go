@@ -11,6 +11,7 @@ const (
 	TemplateConfigFlagDir     = 2
 	TemplateConfigFlagIyfiysi = 4
 	TemplateConfigFlagProtoc  = 8
+	TemplateConfigFlagCopy    = 16 //直接复制，没有这个标识代表使用模板复制
 )
 
 //ProjectFileType 项目文件结构

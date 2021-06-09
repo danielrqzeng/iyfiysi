@@ -1,32 +1,10 @@
 app: "iyfiysi"
 version: "v1.0.0"
-#
-#  .
-#  |-- api
-#  |-- bin
-#  |-- cmd
-#  |   |-- config
-#  |   |-- gateway
-#  |   `-- server
-#  |-- docs
-#  |-- init
-#  |-- internal
-#  |   |-- app
-#  |   |   |-- gateway
-#  |   |   `-- server
-#  |   `-- pkg
-#  |       |-- logger
-#  |       |-- mysql
-#  |       |-- redis
-#  |       `-- utils
-#  |-- pkg
-#  |-- scripts
-#  `-- third_party
 
 templates:
   # 格式说明
   #  - id: "utils_init" #可为空,若是有,则必须唯一
-  #    flag: 5 # 标识(比特组合)，0:none,1:文件类型,2:目录类型,4:给iyfiysi使用,8:给protoc-gen-iyfiysi使用
+  #    flag: 5 # 标识(比特组合)，0:none,1:文件类型,2:目录类型,4:给iyfiysi使用,8:给protoc-gen-iyfiysi使用,16:直接复制（不做模板复制）
   #    name: "util_init" #模板名称
   #    desc: "公共类初始化" #模板描述
   #    src: "util_init.go.tmpl" # 模板原文件(对应template文件夹中的模板文件,其用statik打包在bin包里面)
@@ -485,12 +463,25 @@ templates:
   - id: "metric_grafana_iyfiysi_tmpl"
     flag: 5
     name: "metric_grafana_iyfiysi_tmpl"
-    desc: "grafana的dashboard文件"
+    desc: "grafana的业务dashboard文件"
     src: "metric_grafana_iyfiysi.json.tmpl"
     delims: "{{{,}}}"
     dst: "metric/grafana/iyfiysi.json"
     params:
-
+  - id: "metric_grafana_node_exporter"
+    flag: 21
+    name: "metric_grafana_node_exporter"
+    desc: "grafana的机器dashboard文件"
+    src: "metric_grafana_node_exporter.json.tmpl"
+    dst: "metric/grafana/node.json"
+    params:
+  - id: "metric_grafana_process_exporter"
+    flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
+    name: "metric_grafana_process_exporter"
+    desc: "grafana的进程dashboard文件"
+    src: "metric_grafana_process_exporter.json.tmpl"
+    dst: "metric/grafana/process.json"
+    params:
 
 #自签名证书
 keystore:

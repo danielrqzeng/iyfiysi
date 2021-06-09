@@ -260,6 +260,21 @@ func GenFile(baseDir string, fileConfig *ProjectFileType) (err error) {
 		return
 	}
 
+	//直接复制
+	if fileConfig.Flag&TemplateConfigFlagCopy != 0 {
+		fileStr := ""
+		fileStr, err = GetTmpl(fileConfig.Src)
+		if err != nil {
+			return
+		}
+		err = util.WriteFile(absFile, []byte(fileStr))
+		if err != nil {
+			return
+		}
+		return
+	}
+	//模板复制
+
 	params := make(map[string]interface{})
 	if fileConfig.Params != nil {
 		params = fileConfig.Params
