@@ -25,6 +25,6 @@ var (
  */
 func init() {
 	newCmd.PersistentFlags().StringVarP(&appName, "app", "a", "", "app name")
-	newCmd.PersistentFlags().StringVarP(&projectDomain, "domain", "n", "", "project domain,go mod need this")
-	//.\iyfiysi.exe new -n test.com -a surl
+	newCmd.PersistentFlags().StringVarP(&projectDomain, "org", "o", "", "organization, a domain like 'iyfiysi.com'")
+	//.\iyfiysi.exe new -o iyfiysi.com -a surl
 }
