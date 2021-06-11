@@ -9,6 +9,7 @@ require (
 	github.com/gogo/protobuf v1.2.1
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.3.2
+	github.com/gookit/color v1.4.2
 	github.com/grpc-ecosystem/grpc-gateway v1.13.0 // indirect
 	github.com/iancoleman/strcase v0.1.3
 	github.com/logrusorgru/aurora v2.0.3+incompatible
@@ -17,10 +18,9 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/square/certstrap v1.2.0 // indirect
 	go.uber.org/zap v1.10.0
-	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd // indirect
 	golang.org/x/text v0.3.2 // indirect
 	google.golang.org/genproto v0.0.0-20191108220845-16a3f7862a1a
-	google.golang.org/grpc v1.26.0
+	google.golang.org/grpc v1.26.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 
 )

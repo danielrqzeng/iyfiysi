@@ -2,6 +2,7 @@ package comm
 
 import (
 	"fmt"
+	"github.com/gookit/color"
 	"github.com/logrusorgru/aurora"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/viper"
@@ -10,6 +11,7 @@ import (
 	"iyfiysi/util"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"text/template"
 	"time"
@@ -156,6 +158,7 @@ func Mkdir(absDir string) (err error) {
 			return
 		}
 		fmt.Println("mkdir baseDir ", aurora.Green(absDir), " success")
+		//fmt.Println("mkdir baseDir ", color.FgGreen.Render(absDir), " success")
 	} else {
 		//fmt.Println("mkdir fail cuz baseDir ", aurora.Red(absDir), " exist")
 	}
@@ -362,4 +365,11 @@ func GenCert(
 		return
 	}
 	return
+}
+
+func init() {
+	if runtime.GOOS == "windows" {
+		//启动window彩色终端输出
+		fmt.Println("enable " + color.FgGreen.Render("window") + " color output")
+	}
 }
