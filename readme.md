@@ -8,22 +8,118 @@ iyfiysi是一个生成一个简单易用的分布式框架工具。
 ---
 ### 1.安装protoc
 #### win平台
-* 下载pb编译工具protoc [win版本](https://repo1.maven.org/maven2/com/google/protobuf/protoc/3.9.0/protoc-3.9.0-windows-x86_64.exe)
-* 可以移到${GO_PATH}/bin目录下，然后使用goland的控制台来使用命令
-#### linux平台
-* 下载pb编译工具protoc [linux版本](https://repo1.maven.org/maven2/com/google/protobuf/protoc/3.9.0/protoc-3.9.0-linux-x86_64.exe)
-* 改名为protoc,添加到bin路径：`mv protoc-3.9.0-linux-x86_64.exe protoc`,`cp protoc /usr/bin/`
-#### mac平台(osx)
-* 下载pb编译工具protoc [osx版本](https://repo1.maven.org/maven2/com/google/protobuf/protoc/3.9.0/protoc-3.9.0-osx-x86_64.exe)
-* 改名为protoc,添加到bin路径：`mv protoc-3.9.0-osx-x86_64.exe protoc`,`cp protoc /usr/bin/`
+* 下载pb编译工具`protoc`
+  * [win版本](https://repo1.maven.org/maven2/com/google/protobuf/protoc/3.9.0/protoc-3.9.0-windows-x86_64.exe)
+  * [linux版本](https://repo1.maven.org/maven2/com/google/protobuf/protoc/3.9.0/protoc-3.9.0-linux-x86_64.exe)
+  * [osx版本](https://repo1.maven.org/maven2/com/google/protobuf/protoc/3.9.0/protoc-3.9.0-osx-x86_64.exe)
+* 放置于${GO_PATH}/bin目录(window平台，务必保证其为`protoc.exe`,linux或者mac平台保证为`protoc`)
 ---
-### 2.安装go
-* 要求go版本>=1.12
----
-### 3.安装iyfiysi和依赖
+### 2.安装iyfiysi和依赖
+要求go版本>=1.13,安装`iyfiysi`
+* 进入到GO_PATH目录中，`cd GO_PATH`
 * `go get github.com/RQZeng/iyfiysi`
-* `go mod download`
-* 在linux系统中安装`sh build.sh`
+* `cd github.com/RQZeng/iyfiysi`
+* 在linux|mac中安装[sh build.sh]()
+  ```sh
+  #效果如下
+  [root@VM_0_14_centos bin]# ll protoc*
+  ...
+  -rwxr-xr-x 1 root root 15520427 Jun 11 17:43 /data/go_path/bin/iyfiysi
+  -rwxr-xr-x 1 root root  6347332 Jun 11 17:43 /data/go_path/bin/protoc
+  -rwxr-xr-x 1 root root  6347332 Jun 11 17:43 /data/go_path/bin/protoc-gen-go
+  -rwxr-xr-x 1 root root  7464659 Jun 11 17:43 /data/go_path/bin/protoc-gen-grpc-gateway
+  -rwxr-xr-x 1 root root 16758590 Jun 11 17:43 /data/go_path/bin/protoc-gen-iyfiysi
+  -rwxr-xr-x 1 root root  7174301 Jun 11 17:43 /data/go_path/bin/protoc-gen-swagger
+  ...
+  ```
+* 在window系统中安装[build.bat]()
+  ```
+  # 效果如下
+  PS F:\go_path\bin> ls
+  ...
+  -a----        2021/6/11     17:40        6501376 protoc-gen-go.exe
+  -a----        2021/6/11     17:40        7615488 protoc-gen-grpc-gateway.exe
+  -a----        2021/6/11     17:40       16616448 protoc-gen-iyfiysi.exe
+  -a----        2021/6/11     17:40        7955968 protoc-gen-swagger.exe
+  -a----        2021/6/11     17:40        7955968 protoc.exe
+  -a----        2021/6/11     17:40       15400448 iyfiysi.exe
+  ...
+  ```
+---
+
+### 3.项目生成
+* 项目标识：项目使用组织和app名称来标识一个项目
+  * 组织：一个域名，比如 iyfiysi.com
+  * app名称:项目名称，比如test
+  > 此标识是项目里面非常重要的，需要做成唯一可识
+* 此处假设我们启动项目于目录`/data/project`,使用组织标识为`iyfiysi.com`,app为`test`,`cd /data/project`
+* 新建项目:[iyfiysi new -o iyfiysi.com -a test]()
+* 新建完成，可以看到生成的项目布局如下：
+  ```sh
+  [root@VM_0_14_centos test]# tree -L 3
+  .
+  |-- build.sh #构建脚本
+  |-- cmd
+  |   |-- conf #配置进程
+  |   |   `-- main.go
+  |   |-- gateway #gateway进程
+  |   |   `-- main.go
+  |   `-- server #server进程
+  |       `-- main.go
+  |-- conf #项目配置
+  |   `-- app.yaml
+  |-- go.mod
+  |-- go.sum
+  |-- internal
+  |   |-- app
+  |   |   |-- gateway #cmd.gateway-->app.gateway
+  |   |   `-- server #cmd.server->app.server
+  |   |       `-- service #业务实现
+  |   `-- pkg
+  |       |-- conf
+  |       |-- data
+  |       |-- db
+  |       |-- governance #服务治理
+  |       |-- interceptor #中间件
+  |       |-- logger
+  |       |-- trace
+  |       `-- utils
+  |-- keystore #http2的自签名证书
+  |   |-- ca.crt
+  |   |-- ca.key
+  |   |-- grpc.crt
+  |   |-- grpc.csr
+  |   `-- grpc.key
+  |-- LICENSE
+  |-- logs
+  |-- metric #监控相关
+  |   |-- confd # confd的配置和配置生成
+  |   |   |-- conf.d
+  |   |   `-- templates
+  |   `-- grafana # grafana的dashbord 配置
+  |       |-- iyfiysi.json
+  |       |-- node.json
+  |       `-- process.json
+  |-- proto
+  |   |-- gen.sh
+  |   |-- google
+  |   |   |-- api
+  |   |   |-- protobuf
+  |   |   `-- rpc
+  |   `-- service.proto #对外服务的定义的pb文件
+  |-- test_conf
+  |-- test_gateway
+  `-- test_server
+  ```
+
+* 编译：`cd iyfiysi.com/test;`
+  * linux|mac:[sh build.sh]()
+  * window:[build.bat]()
+* 编辑生成三个bin文件，分别为
+  * test_conf：配置中心，其功能是将配置上传到etcd，配置文件对应的是`conf/app.yaml`
+  * test_gateway：网关服务器
+  * test_server：业务服务器
+
 ---
 ### 4.etcd服务
 * etcd在项目中，作用是配置中心和服务治理，是项目中必不可少的依赖
