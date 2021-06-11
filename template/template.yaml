@@ -34,6 +34,13 @@ templates:
     src: "build.sh.tmpl"
     dst: "build.sh"
     params:
+  - id: "build.bat"
+    flag: 5
+    name: "build.bat"
+    desc: "windwo编译脚本"
+    src: "build.bat.tmpl"
+    dst: "build.bat"
+    params:
   - id: "conf_init"
     flag: 5
     name: "conf_init"
@@ -320,9 +327,16 @@ templates:
   - id: "proto_gen.sh"
     flag: 5
     name: "proto_gen.sh"
-    desc: "生成pb的脚步"
+    desc: "生成pb的脚本"
     src: "proto_gen.sh.tmpl"
     dst: "proto/gen.sh"
+    params:
+  - id: "proto_gen.bat"
+    flag: 5
+    name: "proto_gen.bat"
+    desc: "生成pb的脚本"
+    src: "proto_gen.bat.tmpl"
+    dst: "proto/gen.bat"
     params:
   - id: "cmd_gateway_main"
     flag: 5

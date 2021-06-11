@@ -19,19 +19,19 @@ eval $(go env)
 
 # build gateway
 cd cmd/gateway
-GOARCH=amd64 GOOS=linux go build -ldflags "-X 'main.commit=$COMMIT_TAG' -X 'main.date=$BUILT_AT'" -o {{.AppName}}_gateway .
+go build -ldflags "-X 'main.commit=$COMMIT_TAG' -X 'main.date=$BUILT_AT'" -o {{.AppName}}_gateway .
 #GOARCH=amd64 GOOS=darwin go build -ldflags "-X 'main.commit=$COMMIT_TAG' -X 'main.date=$BUILT_AT'" -o {{.AppName}}_gateway .
 #GOARCH=amd64 GOOS=windows go build -ldflags "-X 'main.commit=$COMMIT_TAG' -X 'main.date=$BUILT_AT'" -o {{.AppName}}_gateway .
 mv {{.AppName}}_gateway ../..
 cd -
 
 cd cmd/server
-GOARCH=amd64 GOOS=linux go build -ldflags "-X 'main.commit=$COMMIT_TAG' -X 'main.date=$BUILT_AT'" -o {{.AppName}}_server .
+go build -ldflags "-X 'main.commit=$COMMIT_TAG' -X 'main.date=$BUILT_AT'" -o {{.AppName}}_server .
 mv {{.AppName}}_server ../..
 cd -
 
 cd cmd/conf
-GOARCH=amd64 GOOS=linux go build -ldflags "-X 'main.commit=$COMMIT_TAG' -X 'main.date=$BUILT_AT'" -o {{.AppName}}_conf .
+go build -ldflags "-X 'main.commit=$COMMIT_TAG' -X 'main.date=$BUILT_AT'" -o {{.AppName}}_conf .
 mv {{.AppName}}_conf ../..
 cd -
 

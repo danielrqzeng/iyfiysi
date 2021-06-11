@@ -370,6 +370,7 @@ func GenCert(
 func init() {
 	if runtime.GOOS == "windows" {
 		//启动window彩色终端输出
-		fmt.Println("enable " + color.FgGreen.Render("window") + " color output")
+		//fmt.Println("enable " + color.FgGreen.Render("window") + " color output")
+		color.FgGreen.Render("window")
 	}
 }

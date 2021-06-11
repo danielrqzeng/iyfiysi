@@ -1,0 +1,29 @@
+@echo on
+
+@rem Copyright (C) 2020 iyfiysi
+@rem gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+@rem pb构建
+cd proto
+call gen.bat
+cd ..
+
+rem BUILT_AT=2020-03-30 10:08:54
+set BUILT_AT=%date:~0,4%-%date:~5,2%-%date:~8,2% %time%
+set COMMIT_TAG=unknow
+for /F %%i in ('git rev-parse HEAD') do ( set COMMIT_TAG=%%i)
+
+cd cmd\gateway
+go build -ldflags "-X 'main.commit=%COMMIT_TAG%' -X 'main.date=%BUILT_AT%'" -o {{.AppName}}_gateway.exe .
+move {{.AppName}}_gateway.exe ..\..
+cd ..\..
+
+cd cmd\server
+go build -ldflags "-X 'main.commit=%COMMIT_TAG%' -X 'main.date=%BUILT_AT%'" -o {{.AppName}}_server.exe .
+move {{.AppName}}_server.exe ..\..
+cd ..\..
+
+cd cmd\conf
+go build -ldflags "-X 'main.commit=%COMMIT_TAG%' -X 'main.date=%BUILT_AT%'" -o {{.AppName}}_conf.exe .
+move {{.AppName}}_conf.exe ..\..
+cd ..\..
