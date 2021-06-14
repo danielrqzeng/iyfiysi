@@ -69,5 +69,11 @@ func main() {
 	metricCmd := `ETCDCTL_API=3 etcdctl get --prefix "` + metricKey + `"`
 	fmt.Println("etcd way to check " + aurora.Red("metric").String() + " is cmd=" + aurora.Green(metricCmd).String())
 
+	//help之文档
+	swaggerKey := viper.GetString("etcd.swaggerKey")
+	swaggerCmd := `ETCDCTL_API=3 etcdctl get --prefix "` + swaggerKey + `"`
+	fmt.Println("etcd way to check " + aurora.Red("swagger").String() + " is cmd=" + aurora.Green(swaggerCmd).String())
+
+
 	return
 }

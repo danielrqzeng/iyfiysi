@@ -65,6 +65,7 @@ protoc是一个由proto文件生成各种语言数据接口的工具，此项目
   * app名称:项目名称，比如[test]()
   > 此标识是项目里面非常重要的，需要做成唯一可识
 * 此处假设我们启动项目于目录`/data/project`,使用组织标识为`iyfiysi.com`,app为`test`
+  > 对于创建目录的要求，其不在${GO_PATH}/src中即可
 * 进入目录中`cd /data/project`
 * 使用命令，新建项目:[iyfiysi new -o iyfiysi.com -a test]()
 * 新建完成，可以在目录`/data/project/iyfiysi.com/test/`看到生成的项目布局如下：

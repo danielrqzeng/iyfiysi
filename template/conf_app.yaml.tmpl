@@ -26,8 +26,16 @@ gateway:
     *ignoreIPRef
   potentialIP:
     *potentialIPRef
-  swaggerOn: true #是否开启swagger
-  swaggerPort: 8080 #swagger文档的端口,意味着若是多个gateway，其也只会开启一个swagger地址
+# swagger服务
+swagger:
+  enable: false
+  minPort: 8080
+  maxPort: 8085
+  ignoreIP:
+    *ignoreIPRef
+  potentialIP:
+    *potentialIPRef
+  path: "/swagger"
 
 # server service,不支持即改即生效
 server:
@@ -62,6 +70,7 @@ etcd:
   enable: {{.EtcdEnable}} #是否开启etcd服务，目前只能开启
   metricKey: "/{{.Domain}}/{{.AppName}}/metric" #服务监控的key
   serviceKey: "/{{.Domain}}/{{.AppName}}/service" #注册服务的key
+  swaggerKey: "/{{.Domain}}/{{.AppName}}/swagger" #文档服务的key
   etcdServer:
 {{- range $EtcdServer := .EtcdServers}}
     - "{{$EtcdServer}}"
