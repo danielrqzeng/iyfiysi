@@ -1,27 +1,29 @@
 # iyfiysi
 iyfiysi是一个生成一个简单易用的分布式框架工具。
-通过iyfiysi生成的是一个依赖少，易于快速扩展，提供api服务的框架。其基于[grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway)，集成了服务治理，配置管理，鉴权，rpc服务，链路追踪，监控告警等特性于一体的高可用，高可靠，可扩展的api服务框架
+通过iyfiysi生成的是一个依赖少，易于快速扩展，提供api服务的框架。其基于[grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway)，集成了服务治理，配置管理，鉴权，限流，rpc服务，链路追踪，监控告警等特性于一体的高可用，高可靠，可扩展的api服务框架
 
 
 
 ## quick start
 ---
 ### 1.安装protoc
-#### win平台
-* 下载pb编译工具`protoc`
+protoc是一个由proto文件生成各种语言数据接口的工具，此项目使用的是3.9.0的版本的protoc
+* 下载`protoc`
   * [win版本](https://repo1.maven.org/maven2/com/google/protobuf/protoc/3.9.0/protoc-3.9.0-windows-x86_64.exe)
   * [linux版本](https://repo1.maven.org/maven2/com/google/protobuf/protoc/3.9.0/protoc-3.9.0-linux-x86_64.exe)
   * [osx版本](https://repo1.maven.org/maven2/com/google/protobuf/protoc/3.9.0/protoc-3.9.0-osx-x86_64.exe)
 * 放置于${GO_PATH}/bin目录(window平台，务必保证其为`protoc.exe`,linux或者mac平台保证为`protoc`)
+  > 需添加${GO_PATH}/bin为系统执行路径
+
 ---
 ### 2.安装iyfiysi和依赖
-要求go版本>=1.13,安装`iyfiysi`
+要求go版本>=1.13
 * 进入到GO_PATH目录中，`cd GO_PATH`
 * `go get github.com/RQZeng/iyfiysi`
 * `cd github.com/RQZeng/iyfiysi`
-* 在linux|mac中安装[sh build.sh]()
+* 在linux|mac中安装[sh install.sh]()
   ```sh
-  #效果如下
+  # 安装完毕，效果如下
   [root@VM_0_14_centos bin]# ll protoc*
   ...
   -rwxr-xr-x 1 root root 15520427 Jun 11 17:43 /data/go_path/bin/iyfiysi
@@ -32,9 +34,9 @@ iyfiysi是一个生成一个简单易用的分布式框架工具。
   -rwxr-xr-x 1 root root  7174301 Jun 11 17:43 /data/go_path/bin/protoc-gen-swagger
   ...
   ```
-* 在window系统中安装[build.bat]()
-  ```
-  # 效果如下
+* 在window系统中安装[install.bat]()
+  ```sh
+  # 安装完毕，效果如下
   PS F:\go_path\bin> ls
   ...
   -a----        2021/6/11     17:40        6501376 protoc-gen-go.exe
@@ -50,11 +52,12 @@ iyfiysi是一个生成一个简单易用的分布式框架工具。
 ### 3.项目生成
 * 项目标识：项目使用组织和app名称来标识一个项目
   * 组织：一个域名，比如 iyfiysi.com
-  * app名称:项目名称，比如test
+  * app名称:项目名称，比如[test]()
   > 此标识是项目里面非常重要的，需要做成唯一可识
-* 此处假设我们启动项目于目录`/data/project`,使用组织标识为`iyfiysi.com`,app为`test`,`cd /data/project`
-* 新建项目:[iyfiysi new -o iyfiysi.com -a test]()
-* 新建完成，可以看到生成的项目布局如下：
+* 此处假设我们启动项目于目录`/data/project`,使用组织标识为`iyfiysi.com`,app为`test`
+* 进入目录中`cd /data/project`
+* 使用命令，新建项目:[iyfiysi new -o iyfiysi.com -a test]()
+* 新建完成，可以在目录`/data/project/iyfiysi.com/test/`看到生成的项目布局如下：
   ```sh
   [root@VM_0_14_centos test]# tree -L 3
   .
@@ -121,149 +124,37 @@ iyfiysi是一个生成一个简单易用的分布式框架工具。
   * test_server：业务服务器
 
 ---
-### 4.etcd服务
-* etcd在项目中，作用是配置中心和服务治理，是项目中必不可少的依赖
-* 使用改项目需要先准备好etcd服务，或者按照以下步骤启动一个etcd服务
-* 假设在目录`/data/docker/etcd`中启动一个etcd的镜像服务（单节点）
-* `mkdir /data/docker/etcd/etcd-data`
-* 启动配置
-```yaml
-#/data/docker/etcd/docker-compose.yml
-etcd:
-    image: 'quay.io/coreos/etcd:v3.1.7'
-    restart: always
-    ports:
-        - '2379:2379'
-        - '2380:2380'
-        - '4001:4001'
-    environment:
-        - TZ=CST-8
-        - LANG=zh_CN.UTF-8
-    command:
-        /usr/local/bin/etcd
-        -name etcd0
-        -data-dir /etcd-data
-        -advertise-client-urls http://172.30.0.14:2379,http://172.30.0.14:4001
-        -listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001
-        -initial-advertise-peer-urls http://172.30.0.14:2380
-        -listen-peer-urls http://0.0.0.0:2380
-        -initial-cluster-token docker-etcd
-        -initial-cluster etcd0=http://172.30.0.14:2380
-        -initial-cluster-state new
-    volumes:
-        - /data/docker/etcd/etcd-data:/etcd-data
-```
-> 以上可知
-> 服务端口为http://172.30.0.14:2379，http://172.30.0.14:4001
-> 集群端口为http://172.30.0.14:2380
 
----
-### 5.项目生成
-* 项目标识：项目使用组织和app名称来标识一个项目
-  * 组织：一个域名，比如 iyfiysi.com
-  * app名称:项目名称，比如test
-  > 此标识是项目里面非常重要的，需要做成唯一可识
-* 此处假设我们启动项目于目录`/data/project`,使用组织标识为`iyfiysi.com`,app为`test`
-* 新建项目:`cd /data/project`;`iyfiysi new -o iyfiysi.com -a test`
-* 新建完成，可以看到生成的项目布局如下：
-  ```sh
-  [root@VM_0_14_centos test]# tree -L 3
-  .
-  |-- build.sh #构建脚本
-  |-- cmd
-  |   |-- conf #配置进程
-  |   |   `-- main.go
-  |   |-- gateway #gateway进程
-  |   |   `-- main.go
-  |   `-- server #server进程
-  |       `-- main.go
-  |-- conf #项目配置
-  |   `-- app.yaml
-  |-- go.mod
-  |-- go.sum
-  |-- internal
-  |   |-- app
-  |   |   |-- gateway #cmd.gateway-->app.gateway
-  |   |   `-- server #cmd.server->app.server
-  |   |       `-- service #业务实现
-  |   `-- pkg
-  |       |-- conf
-  |       |-- data
-  |       |-- db
-  |       |-- governance #服务治理
-  |       |-- interceptor #中间件
-  |       |-- logger
-  |       |-- trace
-  |       `-- utils
-  |-- keystore #http2的自签名证书
-  |   |-- ca.crt
-  |   |-- ca.key
-  |   |-- grpc.crt
-  |   |-- grpc.csr
-  |   `-- grpc.key
-  |-- LICENSE
-  |-- logs
-  |-- metric #监控相关
-  |   |-- confd # confd的配置和配置生成
-  |   |   |-- conf.d
-  |   |   `-- templates
-  |   `-- grafana # grafana的dashbord 配置
-  |       |-- iyfiysi.json
-  |       |-- node.json
-  |       `-- process.json
-  |-- proto
-  |   |-- gen.sh
-  |   |-- google
-  |   |   |-- api
-  |   |   |-- protobuf
-  |   |   `-- rpc
-  |   `-- service.proto #对外服务的定义的pb文件
-  |-- test_conf
-  |-- test_gateway
-  `-- test_server
-  ```
-
-* 编译：`cd /data/project/iyfiysi.com/test;sh build.sh`
-* 编辑生成三个bin文件，分别为
-  * test_conf：配置中心，其功能是将配置上传到etcd，配置文件对应的是`conf/app.yaml`
-  * test_gateway：网关服务器
-  * test_server：业务服务器
----
-### 6.业务实现
+### 4.业务实现
 通过在pb文件定义我们对外的服务，并且在业务服务器中实现该逻辑，以下举例怎么一步步实现一个[加法]()业务
 * 编辑pb文件如下
-  ```js
+  ```diff
   //vim proto/service.proto
 
-  //...
+  + //SumRequest ...
+  + message SumRequest {
+  +     uint64 val1 = 1;
+  +     uint64 val2 = 2;
+  + }         
 
-  //@add sum req&rsp
-  message SumRequest {
-      uint64 val1 = 1;
-      uint64 val2 = 2;
-  }         
-
-  message SumResponse {
-      uint64 sum = 1;
-  }  
-  //...
+  + //SumResponse ...
+  + message SumResponse {
+  +     uint64 sum = 1;
+  + }
 
   service testService {
-      // ...   
-
-      //@add sum rpc
-      rpc Sum(SumRequest) returns (SumResponse) {
-          option (google.api.http) = {
-              post: "/v1/sum"
-              body: "*"                                                         
-          };
-      }     
-      //...
-  }         
+  +    //@add sum rpc
+  +    rpc Sum(SumRequest) returns (SumResponse) {
+  +        option (google.api.http) = {
+  +            post: "/v1/sum"
+  +            body: "*"                                                         
+  +         }
+  +     }
+  }
   ```
 * 构建：`sh build.sh`，构建之后，业务逻辑会生成在`internal/app/server/service`中
 * 做业务逻辑的实现
-  ```go
+  ```diff
   //vim internal/app/server/service/test_service_sum.go
   
   // Code generated by protoc-gen-iyfiysi at 2021 Jun 10
@@ -282,20 +173,47 @@ etcd:
       rsp *pb.SumResponse, err error) { //response
       
       rsp =&pb.SumResponse{}
-      rsp.Sum = req.Val1 + req.Val2 //实现业务逻辑-加法
+  +    rsp.Sum = req.Val1 + req.Val2 //@add 实现业务逻辑-加法
       return
   }
   ```
 * 编译：`sh build.sh`
+
+### 5.服务启动
+* 准备好etcd服务器，比如其在`http://127.0.0.1:2379`
+  > 若是没有etcd，本文也准备了一个[简单启动etcd的教程](http://github.com/iyfiysi/blob/master/etcd.md)，可以现搭起来一个
+* 修改conf/app.yaml
+  ```diff
+  ...
+  # etcd,不支持即改即生效
+  etcd:
+    enable: true #是否开启etcd服务，目前只能开启
+    metricKey: "/test/metric/v1.0.0" #服务监控的key
+    serviceKey: "/test/service/v1.0.0" #注册服务的key
+    etcdServer:
+  +    - "http://127.0.0.1:2379" # @modify 修改为etcd的服务接口
+
+  ...
+  ```
 * 启动服务
   * 配置中心将配置文件上传到etcd:`./test_conf`
-  * 启动gateway：`./test_gateway`,其端口可以在配置`conf/app.yaml`.gateway中找到，目前默认是8000~8050
+  * 启动gateway：`./test_gateway`
   * 启动server：`./test_server`
+  * 启动完成之后，查看gateway侦听了那些接口，在nginx配置个反向代理，即可对外提供服务了
+* 端口服务说明
+  * 8080:swagger接口，默认是不开启，需要在配置中开启才提供
+  * 8000~8050:gateway对外服务将会在这些端口中选择可用端口，提供服务
+  * 30000~30500:server向gateway提供的接口，启动时候选择可用的
+  * 41000~41500:gateway向prometheus提供的监控接口
+  * 42000~42500:server向prometheus提供的监控接口
 * 测试：`curl --location --request POST 'http://172.30.0.14:8000/v1/sum' --header 'Content-Type: applicati/json' --data '{"val1":100,"val2":200}'`
+* 当然也可以开启了swagger接口服务之后，通过swagger查看
+  ![image.png](https://i.loli.net/2021/06/13/q8WSLrhGoXpBnYT.png)
 ---
 
+
 ## 架构解析
-由以上我们可以知道，除了初期的搭建环境比较繁琐之外，业务逻辑实现起来是非常简易的，只需要定义pb和实现业务逻辑即可。下面将介绍一下iyfiysi生成的项目是如何运作的
+由以上我们可以知道，4个步骤即可将框架部署启动完毕，业务逻辑实现起来是非常简易的，只需要定义pb和实现业务逻辑即可。下面将介绍一下iyfiysi生成的项目是如何运作的
 ### 服务架构
 ![](https://www.hualigs.cn/image/60c0ae1f09bf5.jpg)
 * 图中虚框都是可选的服务，主要是服务监控和链路追踪部分
@@ -318,9 +236,8 @@ etcd:
 > 比如一个限制最大次数的值，每次都是从viper读取，若是此配置更改了，此配置对应的逻辑也会生效
 
 ### 服务治理
-* etcd提供前缀+租赁方式，可以很便利地实现一个服务治理
+* etcd提供前缀+租赁保活的方式，可以很便利地实现一个服务治理
 * 本项目中，server服务注册+租赁提供服务，gateway服务发现使用server提供的服务
-* 
 
 ### 链路追踪
 * 路径：`pkg/trace`
