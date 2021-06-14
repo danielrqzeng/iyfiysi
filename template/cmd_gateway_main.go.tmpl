@@ -6,6 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/spf13/viper"
+	"github.com/rakyll/statik/fs"
+	"net/http"
 	"os"
 	"strings"
 	"{{.Domain}}/{{.AppName}}/internal/app/gateway"
@@ -14,12 +16,13 @@ import (
 	"{{.Domain}}/{{.AppName}}/internal/pkg/interceptor"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/logger"
 	"{{.Domain}}/{{.AppName}}/internal/pkg/utils"
+    _ "{{.Domain}}/{{.AppName}}/statik"
 )
 
 //定义一个全局变量的命令行接收参数
 var (
 	etcdServerFlag = flag.String("etcd", "http://127.0.0.1:2379", `etcd server,split with "," if more than one etcd server`)
-	confKeyFlag    = flag.String("conf_key", "/{{.AppName}}/config/app.yaml", `etcd conf key`)
+	confKeyFlag    = flag.String("conf_key", "/{{.Domain}}/{{.AppName}}/config/app.yaml", `etcd conf key`)
 	versionFlag    = flag.Bool("version", false, "print the current version")
 )
 
@@ -49,6 +52,21 @@ func initAll() {
 	trace.Init()
 }
 
+func runSwagger() (err error) {
+	if !viper.GetBool("gateway.swaggerOn") {
+		return
+	}
+    swaggerPort:=viper.GetInt("gateway.swaggerPort")
+    _=swaggerPort
+	//swagger
+    statikFS, err := fs.New()
+    if err != nil {
+        return
+    }
+    go http.ListenAndServe(":8080", http.FileServer(statikFS))
+    return
+}
+
 func main() {
 	flag.Parse()
 
@@ -58,6 +76,11 @@ func main() {
 	}
 
 	initAll()
+
+	err := runSwagger()
+	if err != nil{
+	    panic(err)
+	}
 
 	if err := gateway.App().Run(); err != nil {
 		fmt.Println(err)

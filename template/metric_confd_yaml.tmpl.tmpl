@@ -1,11 +1,12 @@
 # gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
 # confd templates file for {{.Domain}}/{{.AppName}}
 
+{{$org := .Domain}}
 {{$appName := .AppName}}
 #-------------gateway metric------------------
-{{ $appName|printf `{{range gets "/%s/metric/v1.0.0/gateway/*"}}` }}
+{{ printf `{{range gets "/%s/%s/metric/gateway/*"}}` $org $appName }}
 - labels:
-    project: "/{{.Domain}}/{{.AppName}}"
+    project: "{{.Domain}}/{{.AppName}}"
     role: "gateway"
     instance: "{{.Value}}"
   targets:
@@ -13,9 +14,9 @@
 {{printf `{{end}}`}}
 
 #-------------server metric------------------
-{{ $appName|printf `{{range gets "/%s/metric/v1.0.0/server/*"}}` }}
+{{ printf `{{range gets "/%s/%s/metric/server/*"}}` $org $appName }}
 - labels:
-    project: "/{{.Domain}}/{{.AppName}}"
+    project: "{{.Domain}}/{{.AppName}}"
     role: "server"
     instance: "{{.Value}}"
   targets:

@@ -471,7 +471,7 @@ templates:
     name: "metric_confd_tmpl"
     desc: "confd的模板文件"
     src: "metric_confd_yaml.tmpl.tmpl"
-    dst: "metric/confd/templates/confd_tmpl.tmpl"
+    dst: "metric/confd/templates/confd_yaml.tmpl"
     params:
       Value: "{{.Value}}"
   - id: "metric_grafana_iyfiysi_tmpl"
@@ -483,20 +483,85 @@ templates:
     dst: "metric/grafana/iyfiysi.json"
     params:
   - id: "metric_grafana_node_exporter"
-    flag: 21
+    flag: 5
     name: "metric_grafana_node_exporter"
     desc: "grafana的机器dashboard文件"
     src: "metric_grafana_node_exporter.json.tmpl"
+    delims: "{{{,}}}"
     dst: "metric/grafana/node.json"
     params:
   - id: "metric_grafana_process_exporter"
-    flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
+    flag: 5
     name: "metric_grafana_process_exporter"
     desc: "grafana的进程dashboard文件"
     src: "metric_grafana_process_exporter.json.tmpl"
+    delims: "{{{,}}}"
     dst: "metric/grafana/process.json"
     params:
-
+  - id: "metric_prometheus_conf"
+    flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
+    name: "metric_prometheus_conf"
+    desc: "metric_prometheus_conf的docker启动配置文件"
+    src: "metric_prometheus_conf.yml.tmpl"
+    dst: "metric/prometheus/prometheus.yml"
+    params:
+  # -------------swagger-------------------------
+  - id: "swagger-ui.css"
+    flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
+    name: "swagger-ui.css"
+    desc: "swagger-ui.css"
+    src: "swagger-ui.css"
+    dst: "swagger/swagger-ui.css"
+    params:
+  - id: "swagger-ui.js"
+    flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
+    name: "swagger-ui.js"
+    desc: "swagger-ui.js"
+    src: "swagger-ui.js"
+    dst: "swagger/swagger-ui.js"
+    params:
+  - id: "swagger-ui-bundle.js"
+    flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
+    name: "swagger-ui-bundle.js"
+    desc: "swagger-ui-bundle.js"
+    src: "swagger-ui-bundle.js"
+    dst: "swagger/swagger-ui-bundle.js"
+    params:
+  - id: "swagger-ui-standalone-preset.js"
+    flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
+    name: "swagger-ui-standalone-preset.js"
+    desc: "swagger-ui-standalone-preset.js"
+    src: "swagger-ui-standalone-preset.js"
+    dst: "swagger/swagger-ui-standalone-preset.js"
+    params:
+  - id: "swagger-favicon-16x16.png"
+    flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
+    name: "swagger-favicon-16x16.png"
+    desc: "swagger-favicon-16x16.png"
+    src: "swagger-favicon-16x16.png"
+    dst: "swagger/favicon-16x16.png"
+    params:
+  - id: "swagger-favicon-32x32.png"
+    flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
+    name: "swagger-favicon-32x32.png"
+    desc: "swagger-favicon-32x32.png"
+    src: "swagger-favicon-32x32.png"
+    dst: "swagger/favicon-32x32.png"
+    params:
+  - id: "swagger-index.html"
+    flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
+    name: "swagger-index.html"
+    desc: "swagger-index.html"
+    src: "swagger-index.html"
+    dst: "swagger/index.html"
+    params:
+  - id: "swagger-oauth2-redirect.html"
+    flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
+    name: "swagger-oauth2-redirect.html"
+    desc: "swagger-oauth2-redirect.html"
+    src: "swagger-oauth2-redirect.html"
+    dst: "swagger/oauth2-redirect.html"
+    params:
 #自签名证书
 keystore:
   country: "CN" #国家

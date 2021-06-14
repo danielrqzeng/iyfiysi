@@ -8,6 +8,8 @@ cd proto
 call gen.bat
 cd ..
 
+%GOPATH%\bin\statik -src=swagger -f
+
 rem BUILT_AT=2020-03-30 10:08:54
 set BUILT_AT=%date:~0,4%-%date:~5,2%-%date:~8,2% %time%
 set COMMIT_TAG=unknow
