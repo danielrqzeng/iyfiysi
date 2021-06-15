@@ -20,6 +20,13 @@ templates:
     src: "LICENSE.tmpl"
     dst: "LICENSE"
     params:
+  - id: "gitignore"
+    flag: 5 # 5=1+4:文件类型且是给iyfiysi使用
+    name: "gitignore"
+    desc: "gitignore"
+    src: "gitignore.tmpl"
+    dst: ".gitignore"
+    params:
   - id: "gomod"
     flag: 5
     name: "gomod"
