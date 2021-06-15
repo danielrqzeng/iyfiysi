@@ -2,4 +2,4 @@
 
 # setup process-exporter to monitor app {{.AppName}}'s process
 
-nohup ./process-exporter -config.path process.yml >/dev/null 2>&1 &
+nohup ./process-exporter -config.path process.yml -web.listen-address=":9256" >/dev/null 2>&1 &

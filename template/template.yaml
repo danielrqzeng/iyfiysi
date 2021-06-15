@@ -556,6 +556,13 @@ templates:
     src: "metric_process-exporter_setup.sh.tmpl"
     dst: "metric/process-exporter/setup.sh"
     params:
+  - id: "metric_node_exporter_setup"
+    flag: 5
+    name: "metric_process-metric_node_exporter_setup"
+    desc: "metric_node_exporter_setup node_exporter启动脚本"
+    src: "metric_node_exporter_setup.sh.tmpl"
+    dst: "metric/node_exporter/setup.sh"
+    params:
   # -------------swagger-------------------------
   - id: "swagger-ui.css"
     flag: 21 # 1+4+16：文件类型，给iyfiysi使用,直接复制
