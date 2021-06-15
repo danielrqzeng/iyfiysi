@@ -1,0 +1,10 @@
+# gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+# 1.set up process-exporter and get the listen addr
+# 2.modify $targets to the process-exporter listen addr
+# 3.put me to {{.DestPath}}
+- labels:
+    project: "/{{.Domain}}/{{.AppName}}"
+    role: "process"
+  targets:
+    - "172.30.0.14:9256" #修改为node_exporter侦听地址,此处只是实例

@@ -1,0 +1,9 @@
+# gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+# confd watch for {{.Domain}}/{{.AppName}}
+# you may want to change ectd server addr if `http://127.0.0.1:2379` not the right addr
+
+# watch模式:后台进程永远执行，并且监控key是否变更，若是变更则重新生成配置
+
+
+nohup confd -confdir . -config-file "./conf.d/etcd.toml" -log-level=debug -watch -backend etcdv3 -node http://127.0.0.1:2379 &

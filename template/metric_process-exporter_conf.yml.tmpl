@@ -1,0 +1,7 @@
+# conf file for process-exporter
+# gen by iyfiysi at {{ .CreateTime.Format "2006 Jan 02" }}
+
+process_names:
+  - comm:
+    - {{.AppName}}_gateway
+    - {{.AppName}}_server

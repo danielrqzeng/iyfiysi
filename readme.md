@@ -199,8 +199,9 @@ protoc是一个由proto文件生成各种语言数据接口的工具，此项目
   # etcd,不支持即改即生效
   etcd:
     enable: true #是否开启etcd服务，目前只能开启
-    metricKey: "/test/metric/v1.0.0" #服务监控的key
-    serviceKey: "/test/service/v1.0.0" #注册服务的key
+    metricKey: "/iyfiysi.com/test/metric" #服务监控的key
+    serviceKey: "/iyfiysi.com/test/service" #注册服务的key
+    swaggerKey: "/iyfiysi.com/test/swagger" #文档服务的key
     etcdServer:
   +    - "http://127.0.0.1:2379" # @modify 修改为etcd的服务接口
 
@@ -214,10 +215,10 @@ protoc是一个由proto文件生成各种语言数据接口的工具，此项目
 * 端口服务说明
   <center>
   
-  ![Untitled Diagram-port_1_.png](https://i.loli.net/2021/06/13/YrBtmep3igjVNla.png)
+  ![Untitled Diagram-port_1_.png](https://www.hualigs.cn/image/60c821bb6b945.jpg)
   </center>
 
-  * 8080:swagger接口，默认是不开启，需要在配置中开启才提供
+  * 8080~8085:swagger接口，默认是不开启，需要在配置中开启才提供
   * 8000~8050:gateway对外服务将会在这些端口中选择可用端口，提供服务
   * 30000~30500:server向gateway提供的接口，启动时候选择可用的
   * 41000~41500:gateway向prometheus提供的监控接口

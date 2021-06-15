@@ -481,6 +481,20 @@ templates:
     dst: "metric/confd/templates/confd_yaml.tmpl"
     params:
       Value: "{{.Value}}"
+  - id: "metric_confd_once"
+    flag: 5
+    name: "metric_confd_once"
+    desc: "confd的一次启动模版文件"
+    src: "metric_confd_once.sh.tmpl"
+    dst: "metric/confd/once.sh"
+    params:
+  - id: "metric_confd_watch"
+    flag: 5
+    name: "metric_confd_watch"
+    desc: "confd的守护启动模版文件"
+    src: "metric_confd_watch.sh.tmpl"
+    dst: "metric/confd/watch.sh"
+    params:
   - id: "metric_grafana_iyfiysi_tmpl"
     flag: 5
     name: "metric_grafana_iyfiysi_tmpl"
@@ -511,6 +525,36 @@ templates:
     desc: "metric_prometheus_conf的docker启动配置文件"
     src: "metric_prometheus_conf.yml.tmpl"
     dst: "metric/prometheus/prometheus.yml"
+    params:
+  - id: "metric_prometheus_node_exporter_conf"
+    flag: 5
+    name: "metric_prometheus_node_exporter_conf"
+    desc: "metric_prometheus_node_exporter_conf 生成的给prometheus使用的node源（其需要后续再人工配置的）"
+    src: "metric_prometheus_node_exporter_conf.yml.tmpl"
+    dst: "metric/prometheus/node.yaml"
+    params:
+      - DestPath: "${PATH_TO_PROMETHEUS}/config/file_sd"
+  - id: "metric_prometheus_process-exporter_conf"
+    flag: 5
+    name: "metric_prometheus_process-exporter_conf"
+    desc: "metric_prometheus_process-exporter_conf 生成的给prometheus使用的process源（其需要后续再人工配置的）"
+    src: "metric_prometheus_process-exporter_conf.yml.tmpl"
+    dst: "metric/prometheus/process.yaml"
+    params:
+      - DestPath: "${PATH_TO_PROMETHEUS}/config/file_sd"
+  - id: "metric_process-exporter_conf"
+    flag: 5
+    name: "metric_process-exporter_conf"
+    desc: "metric_process-exporter_conf 生成的process-exporter启动配置"
+    src: "metric_process-exporter_conf.yml.tmpl"
+    dst: "metric/process-exporter/process.yml"
+    params:
+  - id: "metric_process-exporter_setup"
+    flag: 5
+    name: "metric_process-exporter_setup"
+    desc: "metric_process-exporter_setup process-exporter启动脚本"
+    src: "metric_process-exporter_setup.sh.tmpl"
+    dst: "metric/process-exporter/setup.sh"
     params:
   # -------------swagger-------------------------
   - id: "swagger-ui.css"
