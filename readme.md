@@ -1,5 +1,12 @@
 # iyfiysi
-iyfiysi是一个生成一个简单易用的分布式框架工具。
+[toc]
+
+---
+<center>
+
+# iyfiysi
+</center>
+**iyfiysi**是一个生成一个简单易用的分布式框架工具。
 通过iyfiysi生成的是一个依赖少，易于快速扩展，提供api服务的框架。其基于[grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway)，集成了服务治理，配置管理，鉴权，限流，rpc服务，链路追踪，监控告警等特性于一体的高可用，高可靠，可扩展的api服务框架
 
 iyfiysi生成的框架优点在于
@@ -107,13 +114,22 @@ protoc是一个由proto文件生成各种语言数据接口的工具，此项目
   |-- LICENSE
   |-- logs
   |-- metric #监控相关
-  |   |-- confd # confd的配置和配置生成
-  |   |   |-- conf.d
-  |   |   `-- templates
-  |   `-- grafana # grafana的dashbord 配置
-  |       |-- iyfiysi.json
-  |       |-- node.json
-  |       `-- process.json
+  |   |-- confd  # confd的配置和启动脚本
+  |   |   |-- conf.d # 配置
+  |   |   |-- once.sh
+  |   |   |-- templates # 生成模版
+  |   |   `-- watch.sh
+  |   |-- grafana # grafana的dashbord 配置
+  |   |   |-- iyfiysi.json # 项目监控
+  |   |   |-- node.json #节点监控
+  |   |   `-- process.json # 进程监控
+  |   |-- process-exporter # 进程监控的配置和启动脚本
+  |   |   |-- process.yml
+  |   |   `-- setup.sh
+  |   `-- prometheus # prometheus的启动配置和监控源（机器和进程）的配置
+  |       |-- node.yaml
+  |       |-- process.yaml
+  |       `-- prometheus.yml
   |-- proto
   |   |-- gen.sh
   |   |-- google
@@ -230,9 +246,9 @@ protoc是一个由proto文件生成各种语言数据接口的工具，此项目
 
 
 ## 架构解析
-由以上我们可以知道，4个步骤即可将框架部署启动完毕，业务逻辑实现起来是非常简易的，只需要定义pb和实现业务逻辑即可。下面将介绍一下iyfiysi生成的项目是如何运作的
+由以上我们可以知道，5个步骤即可将框架部署启动完毕，业务逻辑实现起来是非常简易的，只需要定义pb和实现业务逻辑即可。下面将介绍一下iyfiysi生成的项目是如何运作的
 ### 服务架构
-![](https://www.hualigs.cn/image/60c0ae1f09bf5.jpg)
+![](https://www.hualigs.cn/image/60c82e0fa3a63.jpg)
 * 图中虚框都是可选的服务，主要是服务监控和链路追踪部分
 * 实框中主要有etcd服务，提供配置中心和服务治理的功能
 * 项目编译出来三个业务进程
@@ -240,63 +256,131 @@ protoc是一个由proto文件生成各种语言数据接口的工具，此项目
   * gateway：网关，为外部请求提供入口，其集成服务发现，频率限制，链路追踪，监控等等功能
   * server：业务实现，根据pb定义接口，做业务的实现，其集成服务注册链路追踪，监控等等功能
 
+
+---
+## [框架关键技术说明]()
 ### 配置中心
-* etcd本质上是一个kv数据库，还带有版本控制的功能，是以其是合适做配置中心，存放配置信息的
+* etcd本质上是一个kv数据库，带有保活租赁，前缀侦听等功能，是以其是合适做配置中心，存放配置信息的
 * 本项目使用etcd作为配置中心，通过进程conf业务配置到etcd，以供gateway和server使用
-* gateway和server进程，启动时只需要指定etcd和配置信息，即可启动，其不会读取本地的配置信息
+* gateway和server进程，启动时指定etcd服务器和配置key，即可启动，其将会读取etcd的远程配置信息启动程序
 * 配置信息什么时候上传？
   * 首次启动时候，必须先通过conf进程上传配置信息`conf/app.yaml`到etcd
   * 配置有变动时候，也可以通过conf上传
-> 配置信息上传之后，在gateway和server是即时生效的
-> 配置生效不同于配置对应的逻辑生效
-> 比如侦听了一个服务端口在8090，此时配置信息修改为8091，虽然配置生效了，但是无法更改配置对应的侦听端口
-> 比如一个限制最大次数的值，每次都是从viper读取，若是此配置更改了，此配置对应的逻辑也会生效
+  > 配置信息上传之后，在gateway和server是即时生效的，同时也会有事件通知其变动情况
+  > 配置生效不同于配置对应的逻辑生效
+  > 比如侦听了一个服务端口在8090，后配置信息修改为8091，虽然配置生效了，但是无法更改配置对应的侦听端口
+  > 比如一个限制最大次数的值，使用时从viper读取，若是此配置更改了，此配置对应的逻辑也会生效
 
-### 服务治理
-* etcd提供前缀+租赁保活的方式，可以很便利地实现一个服务治理
-* 本项目中，server服务注册+租赁提供服务，gateway服务发现使用server提供的服务
+进程怎么使用
+* 配置是以一个kv的形式，保存在etcd中
+* 三个进程（conf,server,gateway）,启动的命令行参数，可以指明etcd服务器，key
+* 若是未指明，则使用默认值，理论上只需要指明etcd服务器即可，key是项目创建时用户指定的组织和app名组成
 
 ---
+### 服务治理
+服务治理的调用关系说明
+* 服务提供者在启动时，向注册中心注册自己提供的服务
+* 服务消费者在启动时，向注册中心订阅自己所需的服务
+* 注册中心返回服务提供者地址列表给消费者，如果有变更，注册中心将基于长连接推送变更数据给消费者
+* 服务消费者，从提供者地址列表中，基于负载均衡算法，选一台可用给消费者进行调用
+
+本框架的服务治理详情如下：
+* etcd提供前缀+租赁保活的方式，通过这种方式，可以实现一个即插即用的容易scale的服务集群
+* 本框架中，使用etcd作为服务治理的服务治理中心，框架的服务治理主要有三个部分组成
+  * **对外业务服务**：由业务服务器提供服务（服务注册），网关对服务进行发现和使用（服务订阅和发现）
+  * **对内grpc服务**：[@TODO]()，业务需求决定是否需要其他的grpc的服务
+  * **监控服务**：有业务服务器和网关服务器提供服务，confd对服务进行发现和使用
+  * **文档服务**：swagger服务，此服务是可选的，由开关控制。开启开关后，网关服务器提供服务
+
+本框架的服务治理配置信息
+```yaml
+# vim conf/app.yaml
+
+# ...
+# etcd,不支持即改即生效
+etcd:
+  enable: true #是否开启etcd服务，目前只能开启
+  metricKey: "/iyfiysi.com/test/metric" #服务监控的key,iyfiysi.com/test为项目生成时候，用户传进来的组织和app名称
+  serviceKey: "/iyfiysi.com/test/service" #注册服务的key
+  swaggerKey: "/iyfiysi.com/test/swagger" #文档服务的key                       
+  etcdServer:
+    - "http://127.0.0.1:2379"
+# ...
+
+```
+---
 ### 链路追踪
-基于`jaeger`的链路追踪，使得请求一目了然。在项目中，每个请求都被trace记录，并且上报jeager服务后台，使用jaeger的服务后台，即可查看其链路情况。
-> 需要预先准备好jaeger服务后台，若是没有，本项目也提供了一个快速搭建[jaeger服务后台]()的方式
+基于`jaeger`的链路追踪，使得请求一目了然。在项目中，每个请求都被trace记录，并且上报jeager服务后台，使用jaeger的服务后台，即可查看请求链路情况
+> 需要预先准备好jaeger服务后台，若是没有，本项目也提供了一个快速搭建[jaeger服务后台](http://github.com/iyfiysi/blob/master/jaeger.md)的方式
 #### 链路追踪配置
 ```yaml
 # vim conf/app.yaml
 
 #...
-# jaeger,不支持即改即生效
+# jaeger,不支持配置即改即生效
 jaeger:
   enable: true
   jaegerServer:
     - "localhost:6831"
 #...
 ```
-* 链路追踪默认是关闭的，毕竟其有性能损耗，需要用户根据业务情况，自个开启
+* 链路追踪默认是关闭的，因为其有性能损耗，需要用户根据业务情况，自个开启
 #### 链路追踪内容
 * 项目中，默认记录了以下的span
   * http的span
   * grpc的span
   > 以上span记录了名称，路径，耗时等等信息
-* 项目中还提供了以下的span以供真实业务使用
+* 项目中还提供了以下的span以供具体业务使用
   * mysql的span
   * redis的span
 * 另外，项目中，暂时并没有实现函数级别的span，其已经列为TODO计划中，目前追求是在编译侧直接搞定，不需要人工做任何开发，是以使用该框架的用户，无需自行做函数级别的span
 * 监控的效果图如下：
-
+![](https://www.hualigs.cn/image/60c856004bbad.jpg)
 ---
 
-### 中间件（拦截器）
-* 路径：`pkg/intercepor`
-* 使用的组件有两个方面
-    * grpcgateway官方提供的常用组件
-    * 自定义组件
+### API文档
+基于pb接口定义，生成了swagger的接口文档，以供开发者更好地对接
+* 文档服务的配置信息如下
+```yaml
+# vim conf/app.yaml
 
-* 使用的是jeager组件，可以关闭，默认是开启
-* 链路追踪包含
-    * 请求路径
-    * 请求耗时
-    * 其他组件追踪（函数追踪，db追踪，cache追踪)
+#...
+# swagger服务
+swagger:  
+  enable: true
+  minPort: 8080
+  maxPort: 8085
+  ignoreIP:
+    *ignoreIPRef
+  potentialIP:
+    *potentialIPRef
+  path: "/swagger/"
+#...
+```
+* 默认情况下，文档服务是关闭的，只有在开发对接情况下才开放，生产环境务必关闭之
+* 以上可知，其服务接口为8080~8085,启动后可以通过注册中心查看
+* 其web地址为：http://<your_server_addr>:8080/swagger/
+
+---
+### 中间件（拦截器）
+拦截器是一种共性控制类的功能，在实际业务处理之前，对请求进行验证。拦截器的代码放置于`pkg/intercepor`中
+<center>
+
+
+![](https://www.hualigs.cn/image/60c872e948005.jpg)
+</center>
+#### 网关（gateway）
+* 日志拦截器：记录请求的审计日志
+* 监控拦截器：对请求进行监控统计，并且将这些数据保存，以便prometheus拉取
+* 重试拦截器：是否重试
+* 限流拦截器：[动态限流](https://fredal.xin/netflix-concuurency-limits),基本原理是基于tcp的拥塞控制
+* 链路追踪拦截器：链路追踪
+#### 服务器（server）
+* 日志拦截器：记录请求的审计日志
+* 监控拦截器：对请求进行监控统计，并且将这些数据保存，以便prometheus拉取
+* 认证拦截器：验证是否请求端（gateway）是否有权限调用服务，使用的是token的方式校验
+* 恢复拦截器：异常恢复
+* 链路追踪拦截器：链路追踪
 
 ---
 ### [监控]()
@@ -306,6 +390,30 @@ jaeger:
     * [机器监控]()：对机器的指标进行监控，cpu,mem,io等
     * [进程监控]()：通过进程名，对某些进程进行监控，cpu,mem,io等指标
     * [业务监控]()：对业务进行监控，比如业务的qps，耗时等等
+* 在项目中的配置如下
+```yaml
+# conf/app.yaml
+#...
+metrics:
+  enable: true # 是否开启监控
+  gateway:
+    path: "/metrics"
+    minPort: 41000
+    maxPort: 41500
+    ignoreIP:
+      *ignoreIPRef
+    potentialIP:
+      *potentialIPRef
+  server:
+    path: "/metrics"
+    minPort: 42000
+    maxPort: 42500
+    ignoreIP:
+      *ignoreIPRef
+    potentialIP:
+      *potentialIPRef
+#...
+```
 #### 基础概念
 * 指标源：产生和提供指标的服务进程，一般指各种exporter，各种业务服务器等
 * 指标收集服务器：此处是prometheus
@@ -316,194 +424,83 @@ jaeger:
 
 
 #### 监控安装
-* 启动**prometheus**和**grafana**服务
-    * 此处简单演示下怎么启动prometheus服务，是以用一个docker启动起来（需要先准备好docker和docker-compose）,若是已经有了这两个服务，请忽略此步骤，准备好入口即可
-    * 假设我们部署服务在机器`129.28.162.42/172.30.0.14`,目录`/data/docker/metrics`(使用者替换成自己的ip以使用之)
-    * 最终部署文件目录
-        ```sh
-        [root@VM_0_14_centos metrics]# tree -L 3
-        .
-        |-- docker-compose.yml
-        |-- grafana
-        |   |-- config
-        |   |   `-- grafana.ini # grafana的启动文件，此文件使用默认即可，然后修改下登录的账号密码
-        |   |-- data
-        |   `-- plugins
-        `-- prometheus
-            |-- config
-            |   |-- file_sd #此目录是指标目标，包含机器，进程，业务等提供指标的实例
-            |   `-- prometheus.yml # prometheus的启动文件
-            `-- data
-        ```
-    * docker-compose文件
-        ```yaml
-        # /data/docker/metrics/docker-compose.yml
-        version: '2'
-
-        networks:
-          monitor:
-            driver: bridge
-
-        services:
-          prometheus:
-            image: prom/prometheus:latest
-            container_name: prometheus
-            hostname: prometheus
-            restart: always
-            volumes:
-              - /data/docker/metrics/prometheus/config:/etc/prometheus
-              - /data/docker/metrics/prometheus/data:/prometheus
-            ports:
-              - "9091:9091"
-            expose:
-              - "8086"
-            command:
-              - '--config.file=/etc/prometheus/prometheus.yml' #docker中的配置文件
-              - '--log.level=info'
-              - '--web.listen-address=0.0.0.0:9091' #服务接口
-              - '--storage.tsdb.path=/prometheus'
-              - '--storage.tsdb.retention=15d' #保存15天
-              - '--query.max-concurrency=50'
-            networks:
-              - monitor
-
-          grafana:
-            image: grafana/grafana:7.5.3
-            container_name: grafana
-            restart: always
-            volumes:
-              - /data/docker/metrics/grafana/config/grafana.ini:/etc/grafana/grafana.ini
-            ports:
-              - "3000:3000"
-              - "25:25"
-            networks:
-              - monitor
-            depends_on:
-              - prometheus
-        ```
-        > 由上面配置我们可以得知
-        > * prometheus的地址为：`${out_ip}:9091`
-        > * grafana的数据源为:`http://prometheus:9091`
-        > * grafana的管理后台为:`${out_ip}:3000`
-    * grafana的配置文件
-        ```ini
-        # grafana/config/grafana.ini
-        ...
-        [server]
-        domain = 129.28.162.42
-        root_url = %(protocol)s://%(domain)s:%(http_port)s/
-        [security]
-        admin_user = admin
-        admin_password = a2zone2ten
-        ...
-        ```
-        > 以上可知，grafana的后台管理地址为`129.28.162.42:3000`(129.28.162.42为部署机器的外网ip，根据自己机器变更之)
-        > 登录的账号密码为`admin/a2zone2ten`
-    * prometheus的配置文件
-        ```yaml
-        # prometheus/config/prometheus.yml
-        #my global config
-        global:
-          scrape_interval:     15s 
-          evaluation_interval: 15s 
-
-        #Alertmanager configuration
-        alerting:
-          alertmanagers:
-          - static_configs:
-            - targets:
-              #- alertmanager:9093
-
-        #Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
-        rule_files:
-          #- "first_rules.yml"
-          #- "second_rules.yml"
-
-        #A scrape configuration containing exactly one endpoint to scrape:
-        #Here it's Prometheus itself.
-        scrape_configs:
-          #The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-          - job_name: 'prometheus'
-            static_configs:
-            - targets: ['localhost:9091']
-
-          # iyfiysi scrape config
-          - job_name: 'iyfiysi'
-            scrape_interval: 5s
-            scheme: http
-            tls_config:
-              insecure_skip_verify: true
-            file_sd_configs:
-            - files:
-                - /etc/prometheus/file_sd/*.yaml
-              refresh_interval: 10s
-        ```
-    * 启动：`docker-compose up`
+* 需要预先安装**prometheus**和**grafana**服务，本项目也提供了一个快速搭建[prometheus服务后台](http://github.com/iyfiysi/blob/master/prometheus.md)的方式
+* 此处假设安装后
+  * prometheus的`file_sd`目录为`/data/docker/metrics/prometheus/config/file_sd`
+  * grafana的web地址为`http://<out_ip>:3000
+  ---
 * 启动[机器监控]()
     * 下面实例中，是运行在linux机器的，[其他环境下载地址](https://github.com/prometheus/node_exporter/releases/)
     * 机器监控，使用的是[node_exporter](https://github.com/prometheus/node_exporter/releases/download/v0.18.1/node_exporter-0.18.1.linux-amd64.tar.gz)
-    * 解压后启动启动：`nohup ./node_exporter --web.listen-address=":9100" >/dev/null 2>&1 &`
-        > 以上启动命令，可知此指标源的地址是`XXX.XXX.XXX.XXX:9100`
-    * 添加指标源配置至prometheus的指标源文件目录
-        ```yaml
-        # /data/docker/metrics/prometheus/config/file_sd/node.yaml
-        # gen by iyfiysi at 2021 Jun 03
-        - labels:
-            project: "/qq.com/test" #修改为org/project的形式
-            role: "node"                         
-          targets:
-            - "172.30.0.14:9100" #修改为node_exporter侦听地址
-        ```
+    * `cd metric/node_exporter`，下载&解压
+    * 启动：`sh setup.sh`
+      > 以上启动命令，可知此指标源的地址是`XXX.XXX.XXX.XXX:9100`
+    * 监控发现：
+    框架生成机器监控的配置
+      ```diff
+      - metric/prometheus/node.yaml 
+      # 1.set up node_exporter and get the listen addr
+      # 2.modify $targets to the node_exporter listen addr                            
+      # 3.put me to ${PATH_TO_PROMETHEUS}/config/file_sd
+      # gen by iyfiysi at 2021 Jun 15
+      - labels:
+          project: "/iyfiysi.com/test"
+          role: "node"
+        targets:
+      +    - "172.30.0.14:9100" #修改为node_exporter侦听地址,监控多少个机器，次第添加即可
+      ```
+    * 将上面修改后的配置，放置于prometheus的文件服务发现目录`/data/docker/metrics/prometheus/config/file_sd`
+    ---
 * 启动[进程监控]()
     * 下面实例中，是运行在linux机器的，[其他环境下载地址](https://github.com/ncabatoff/process-exporter/releases)
-    * 机器监控，使用的是[process-exporter](https://github.com/ncabatoff/process-exporter/releases/download/v0.7.5/process-exporter-0.7.5.linux-amd64.tar.gz)
-    * 启动配置
-        ```yaml
-        process_names:
-            - comm:
-              - test_gateway
-              - test_server
-        ```
-    * 解压后启动启动：`nohup ./process-exporter -config.path process.yml -web.listen-address=":9256" >/dev/null 2>&1 & `
+    * 进程监控，使用的是[process-exporter](https://github.com/ncabatoff/process-exporter/releases/download/v0.7.5/process-exporter-0.7.5.linux-amd64.tar.gz)
+    * `cd metric/process-exporter`，下载&解压
+    * 启动：`sh setup.sh`
         > 以上启动命令，可知此指标源的地址是`XXX.XXX.XXX.XXX:9256`
-    * 添加指标源配置至prometheus的指标源文件目录
-        ```yaml
-        # /data/docker/metrics/prometheus/config/file_sd/process.yaml
-        # gen by iyfiysi at 2021 Jun 03
-        - labels:
-            project: "/qq.com/test" #修改为org/project的形式
-            role: "process"                         
-          targets:
-            - "172.30.0.14:9256" #修改为node_exporter侦听地址
-        ```
+    * 监控发现：
+    框架生成进程监控的配置
+      ```diff
+      - metric/prometheus/process.yaml 
+      # 1.set up process-exporter and get the listen addr                             
+      # 2.modify $targets to the process-exporter listen addr
+      # 3.put me to ${PATH_TO_PROMETHEUS}/config/file_sd
+      # gen by iyfiysi at 2021 Jun 15
+      - labels:
+          project: "/iyfiysi.com/test"
+          role: "process"
+        targets:
+      +    - "172.30.0.14:9256" #修改为process-exporter侦听地址
+      ``` 
+    * 将上面修改后的配置，放置于prometheus的文件服务发现目录`/data/docker/metrics/prometheus/config/file_sd`
+  ---
 * 启动[业务监控]()
     * 由于业务服务器启动多少是根据业务而定，是以其势必会有业务服务器乱启动，乱关停
     * 通过服务发现，将当前运行业务服务器找到，并且告知prometheus这些指标源
-    * 使用[confd](https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-amd64)，通过获取ectd中注册的业务服务器，来生成业务服务器的指标源
+    * 使用[confd](https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-amd64)，通过获取在ectd中注册的监控服务实例，来生成监控服务器的指标源
     * 启动配置已经由iyfiysi新建项目时候生成
         ```sh
-        [root@VM_0_14_centos test]# tree metric/confd/
         metric/confd/
         |-- conf.d
         |   `-- confd.toml
-        |-- s.sh
-        `-- templates
-            `-- confd_tmpl.tmpl
+        |-- templates
+        |   `-- confd_yaml.tmpl
+        |-- once.sh # 单次生成监控服务的实例地址
+        `-- watch.sh #watch的模式生成监控服务的实例地址
         ```
     * 将生成目录修正为prometheus的指标源文件目录
-        ```yaml
-        # gen by iyfiysi at 2021 Jun  03
-        # confd config file for qq.com/test
+        ```diff
+        - metric/confd/conf.d/confd.toml
+        # gen by iyfiysi at 2021 Jun 15
+        # confd config file for iyfiysi.com/test
 
         [template]
-        src = "confd_tmpl.tmpl" # templates/
-        #dest = "${PATH_TO_PROMETHEUS}/config/file_sd/test.yaml" # @TODO 此处修改为prometheus的指标源文件目录
-        dest = "/data/docker/metrics/prometheus/config/file_sd/test.yaml"
+        src = "confd_yaml.tmpl" # templates/confd_yaml.tmpl
+        + dest = "/data/docker/metrics/prometheus/config/file_sd/test.yaml"
         keys = [
-            "/test/metric",
+            "/iyfiysi.com/test/metric",
         ]
         ```
-    * 启动服务`sh s.sh`
+    * 启动服务`sh watch.sh`
 * 指标展示grafana
     * 导入数据源`http://prometheus:9091`
     * 导入dashbord配置文件，其是有iyfiysi生成于`metric/grafana`
