@@ -537,6 +537,13 @@ metrics:
 
 
 ---
+## 框架样例
+* [短网址服务](https://github.com/RQZeng/short_url)
+  * 一个基于iyfiysi框架开发的短网址服务，提供短域名编码，短语编码，短域名跳转，禁用等api服务
+  * [业务体验](https://surl4.me/),下图为业务UI
+  ![](https://www.hualigs.cn/image/60c8a321b874b.jpg)
+
+---
 ## 高端制造
 ### 项目生成逻辑
 ![](https://i0.hdslb.com/bfs/album/e5af3a3404ea5b34b182a6d27aa887750eb73d6c.png)
