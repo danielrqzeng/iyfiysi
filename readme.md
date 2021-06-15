@@ -1,11 +1,32 @@
-# iyfiysi
-[toc]
-
+# iyfiysi教程文档
+* [iyfiysi](#iyfiysi)
+   * [快速开始](#快速开始)
+      * [<a href="#protoc">1.安装protoc</a>](#1安装protoc)
+      * [2.安装iyfiysi和依赖](#2安装iyfiysi和依赖)
+      * [3.项目生成](#3项目生成)
+      * [4.业务实现](#4业务实现)
+      * [5.服务启动](#5服务启动)
+   * [架构解析](#架构解析)
+      * [服务架构](#服务架构)
+   * [<a href="">框架关键技术说明</a>](#框架关键技术说明)
+      * [配置中心](#配置中心)
+      * [服务治理](#服务治理)
+      * [链路追踪](#链路追踪)
+         * [链路追踪配置](#链路追踪配置)
+         * [链路追踪内容](#链路追踪内容)
+      * [API文档](#api文档)
+      * [中间件（拦截器）](#中间件拦截器)
+         * [网关（gateway）](#网关gateway)
+         * [服务器（server）](#服务器server)
+      * [<a href="">监控</a>](#监控)
+         * [基础概念](#基础概念)
+         * [监控安装](#监控安装)
+   * [高端制造](#高端制造)
+      * [项目生成逻辑](#项目生成逻辑)
+      * [服务生成逻辑](#服务生成逻辑)
 ---
-<center>
-
 # iyfiysi
-</center>
+
 **iyfiysi**是一个生成一个简单易用的分布式框架工具。
 通过iyfiysi生成的是一个依赖少，易于快速扩展，提供api服务的框架。其基于[grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway)，集成了服务治理，配置管理，鉴权，限流，rpc服务，链路追踪，监控告警等特性于一体的高可用，高可靠，可扩展的api服务框架
 
@@ -20,10 +41,9 @@ iyfiysi框架适用的场景
 * 需要不定时不定量地扩展
 * 对接口数据进行监控管理
 
-
-## quick start
+## 快速开始
 ---
-### 1.安装protoc
+### [1.安装protoc](#protoc)
 protoc是一个由proto文件生成各种语言数据接口的工具，此项目使用的是3.9.0的版本的protoc
 * 下载`protoc`
   * [win版本](https://repo1.maven.org/maven2/com/google/protobuf/protoc/3.9.0/protoc-3.9.0-windows-x86_64.exe)
@@ -369,6 +389,7 @@ swagger:
 
 ![](https://www.hualigs.cn/image/60c872e948005.jpg)
 </center>
+
 #### 网关（gateway）
 * 日志拦截器：记录请求的审计日志
 * 监控拦截器：对请求进行监控统计，并且将这些数据保存，以便prometheus拉取
