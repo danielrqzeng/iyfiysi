@@ -235,7 +235,7 @@ protoc是一个由proto文件生成各种语言数据接口的工具，此项目
 
 ### 5.服务启动
 * 准备好etcd服务器，比如其在`http://127.0.0.1:2379`
-  > 若是没有etcd，本文也准备了一个[简单启动etcd的教程](http://github.com/iyfiysi/blob/master/etcd.md)，可以现搭起来一个
+  > 若是没有etcd，本文也准备了一个[简单启动etcd的教程](http://github.com/RQZeng/iyfiysi/blob/master/etcd.md)，可以现搭起来一个
 * 修改conf/app.yaml
   ```diff
   ...
@@ -338,7 +338,7 @@ etcd:
 ---
 ### 链路追踪
 基于`jaeger`的链路追踪，使得请求一目了然。在项目中，每个请求都被trace记录，并且上报jeager服务后台，使用jaeger的服务后台，即可查看请求链路情况
-> 需要预先准备好jaeger服务后台，若是没有，本项目也提供了一个快速搭建[jaeger服务后台](http://github.com/iyfiysi/blob/master/jaeger.md)的方式
+> 需要预先准备好jaeger服务后台，若是没有，本项目也提供了一个快速搭建[jaeger服务后台](http://github.com/RQZeng/iyfiysi/blob/master/jaeger.md)的方式
 #### 链路追踪配置
 ```yaml
 # vim conf/app.yaml
@@ -452,7 +452,7 @@ metrics:
 
 
 #### 监控安装
-* 需要预先安装**prometheus**和**grafana**服务，本项目也提供了一个快速搭建[prometheus服务后台](http://github.com/iyfiysi/blob/master/prometheus.md)的方式
+* 需要预先安装**prometheus**和**grafana**服务，本项目也提供了一个快速搭建[prometheus服务后台](http://github.com/RQZeng/iyfiysi/blob/master/prometheus.md)的方式
 * 此处假设安装后
   * prometheus的`file_sd`目录为`/data/docker/metrics/prometheus/config/file_sd`
   * grafana的web地址为`http://<out_ip>:3000
