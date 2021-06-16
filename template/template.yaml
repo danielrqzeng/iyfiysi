@@ -431,10 +431,10 @@ templates:
       EtcdEnable: true
       EtcdServers:
         - "http://127.0.0.1:2379"
-      JaegerEnable: true
+      JaegerEnable: false
       JaegerServers:
         - "localhost:6831"
-      MetricsEnable: true
+      MetricsEnable: false
       DnsServerName: "dnsiyfiysi"
       KeystoreCA: "keystore/ca.crt"
       KeystorePublicKey: "keystore/grpc.crt"
