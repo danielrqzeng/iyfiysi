@@ -32,7 +32,7 @@
         driver: bridge
     services:
       prometheus:
-        image: prom/prometheus:latest
+        image: prom/prometheus:v2.27.1
         container_name: prometheus
         hostname: prometheus
         restart: always

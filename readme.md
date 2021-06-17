@@ -542,6 +542,8 @@ metrics:
     * 效果展示之-业务监控
     ![效果图](https://www.hualigs.cn/image/60c0ad8104fe3.jpg)
 
+### 告警
+[@TODO]()
 
 ---
 ## 框架样例
