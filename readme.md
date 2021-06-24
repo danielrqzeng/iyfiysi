@@ -1,4 +1,5 @@
 # iyfiysi教程文档
+* [iyfiysi教程文档](#iyfiysi教程文档)
 * [iyfiysi](#iyfiysi)
    * [快速开始](#快速开始)
       * [<a href="#protoc">1.安装protoc</a>](#1安装protoc)
@@ -21,7 +22,11 @@
       * [<a href="">监控</a>](#监控)
          * [基础概念](#基础概念)
          * [监控安装](#监控安装)
+      * [告警](#告警)
    * [框架样例](#框架样例)
+   * [性能测试](#性能测试)
+      * [基准(base)](#基准base)
+      * [比较结果](#比较结果)
    * [高端制造](#高端制造)
       * [项目生成逻辑](#项目生成逻辑)
          * [模版](#模版)
@@ -34,19 +39,27 @@
 ---
 # iyfiysi
 
-**iyfiysi**是一个生成一个简单易用的分布式框架工具。
+**iyfiysi**是一个生成一个简单易用性能强悍的iyfiysi分布式api服务框架的工具。
 通过iyfiysi生成的是一个依赖少，易于快速扩展，提供api服务的框架。其基于[grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway)，集成了服务治理，配置管理，鉴权，限流，rpc服务，链路追踪，监控告警等特性于一体的高可用，高可靠，可扩展的api服务框架
 
-iyfiysi生成的框架优点在于
-* 多端开发，框架集成工具可以使得其在主流操作系统都可以直接一致地运行
-* 业务框架是进程式的框架，暂时不启用docker方式部署，大大减少所需要的知识储备
-* 适用于特别需要扩展性的场景，其扩展起来只需要不停加进程即可
-* devops式地集成了监控，链路追踪等逻辑，利于对业务进行监控和评估
+iyfiysi和iyfiysi框架设计的几个指导要点
+* 简单：环境简单，开发简单，依赖简单，使用简单，维护简单，扩展简单
+* 一致：无论是在windows，linux还是mac，都是一致的开发流程与步骤
+* 集成：高度集成微服务要素，devops要素，组成一个分布式的api框架
+* 三高：高性能，高可用，高扩展
+* 灵活：框架高度适应业务需要，同时也很便利调整框架以适应业务，一切以业务为中心，以开放的态度拿到所有的控制
+
+---
+基于以上要点设计出来了`iyfiysi工具`和`iyfiysi框架`，
+**iyfiysi工具**：一个可以生成`iyfiysi框架`的工具
+**iyfiysi框架**：api框架实现，是一个只集成基础依赖易于控制，便于扩展的api框架
 
 iyfiysi框架适用的场景
-* api接口
-* 需要不定时不定量地扩展
-* 对接口数据进行监控管理
+* 对外提供api接口（restful）
+* 对内可以使用grpc扩展微服务，提供逻辑构件
+* 不确定业务量，希望小量开始，但是流量大了也可以方便扩展起来
+* api文档齐全，便于展示对接
+* devops高度集成，方便后续运维工作
 
 ## 快速开始
 ---
@@ -551,6 +564,110 @@ metrics:
   * 一个基于iyfiysi框架开发的短网址服务，提供短域名编码，短语编码，短域名跳转，禁用等api服务
   * [业务体验](https://surl4.me/),下图为业务UI
   ![](https://www.hualigs.cn/image/60c8a321b874b.jpg)
+
+---
+## 性能测试
+### 基准(base)
+```go
+package main
+     
+import (
+    "encoding/json"
+    "io/ioutil"
+    "net/http"
+)
+
+// 为了公平起见，此处需要做下编解码
+type Request struct {
+    Value string `json:"value"`
+}    
+     
+type Response struct {
+    Message string `json:"message"`
+}    
+     
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
+    rsp := &Response{}
+    rsp.Message = "hello world"
+     
+    jsonStr, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+        return
+    }
+     
+    req := &Request{}
+    err = json.Unmarshal(jsonStr, req)
+    if err != nil {
+        return
+    }
+    w.Header().Set("Content-Type", "application/json")
+    byteData, _ := json.Marshal(rsp)
+    w.Write(byteData)
+    return
+}
+
+func main() {
+    http.HandleFunc("/v1/ping", IndexHandler)
+    http.ListenAndServe("127.0.0.1:8001",nil)
+}
+```
+---
+### 比较结果
+* 单测
+  > 直连测试
+  ```sh
+  -------------------base----------------------------
+  [root@VM_11_30_centos /data/project/wrk]# sh wrktest.sh
+  Running 10s test @ http://127.0.0.1:8000/v1/ping
+    1 threads and 1 connections
+    Thread Stats   Avg      Stdev     Max   +/- Stdev
+      Latency    82.42us  381.51us  14.50ms   99.56%
+      Req/Sec     8.63k   598.16     9.86k    70.30%
+    Latency Distribution
+       50%   60.00us
+       75%   71.00us
+       90%   84.00us
+       99%  138.00us
+    86713 requests in 10.10s, 12.57MB read
+  Requests/sec:   8585.73
+  Transfer/sec:      1.24MB
+
+  -------------------iyfiysi----------------------------
+  [root@VM_11_30_centos /data/project/wrk]# sh wrktest.sh 
+  Running 10s test @ http://127.0.0.1:8000/v1/ping
+    1 threads and 1 connections
+    Thread Stats   Avg      Stdev     Max   +/- Stdev
+      Latency   483.87us  210.62us   5.14ms   94.95%
+      Req/Sec     1.89k    94.59     2.08k    72.00%
+    Latency Distribution
+       50%  445.00us
+       75%  491.00us
+       90%  552.00us
+       99%    1.48ms
+    18835 requests in 10.00s, 9.36MB read
+  Requests/sec:   1882.96
+  Transfer/sec:      0.94MB
+  [root@VM_11_30_centos /data/project/wrk]# 
+  ```
+
+* 压测
+  > 机器信息：8U16G
+  > 100 threads and 10000 connections
+  > wrk通过nginx反向代理到服务器
+
+  |服务|qps|top50|top75|top90|top99|
+  |--|--|--|--|--|--|
+  |base|12368.08|10.11ms|12.30ms|14.14ms|2.86s|
+  |2base|11749.71|11.24ms|12.67ms|14.11ms|2.37s|
+  |1gateway1server|4839.56|25.44ms|40.16ms|79.52ms|4.05s|
+  |1gateway2server|5698.74|23.85ms|39.99ms|244.13ms|4.62s|
+  |2gateway2server|7487.25|25.94ms|43.49ms|235.25ms|3.72s|
+
+理论上，空跑出来的压测结果没有什么意义，不过此处为了对齐其他的压测，还是用的空跑。
+对于实际业务压测，可以设计如下
+  * 计算密集类的api，可以写比如10w个循环在要压测的api里面
+  * io密集类的api，可以在api里面睡觉，比如睡个10ms
+  * io密集&计算密集并重api，可以先做计算，再睡觉。比如1k循环+5ms睡觉
 
 ---
 ## 高端制造
