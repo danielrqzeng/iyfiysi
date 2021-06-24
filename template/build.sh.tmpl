@@ -7,7 +7,7 @@ cd proto
 sh gen.sh
 cd -
 
-statik -src ./swagger
+statik -src ./swagger -f
 
 BUILT_AT=$(date "+%Y-%m-%d %H:%M:%S") #2020-03-30 10:08:54
 COMMIT_TAG=$(git rev-parse HEAD) #1c7caa847ce196f0668e01794d3cd773944f3127
