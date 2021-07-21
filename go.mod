@@ -1,4 +1,4 @@
-module iyfiysi
+module github.com/RQZeng/iyfiysi
 
 go 1.12
 

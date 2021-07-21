@@ -1,8 +1,8 @@
 package main
 
 import (
-	"iyfiysi/internal/iyfiysi"
-	_ "iyfiysi/statik"
+	"github.com/RQZeng/iyfiysi/internal/iyfiysi"
+	_ "github.com/RQZeng/iyfiysi/statik"
 )
 
 func main() {

@@ -1,8 +1,8 @@
 package iyfiysi
 
 import (
+	"github.com/RQZeng/iyfiysi/internal/comm"
 	"github.com/spf13/cobra"
-	"iyfiysi/internal/comm"
 )
 
 var (

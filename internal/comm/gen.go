@@ -2,13 +2,13 @@ package comm
 
 import (
 	"fmt"
+	"github.com/RQZeng/iyfiysi/util"
 	"github.com/gookit/color"
 	"github.com/logrusorgru/aurora"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/viper"
 	"go/format"
 	"io/ioutil"
-	"iyfiysi/util"
 	"os"
 	"path/filepath"
 	"runtime"
