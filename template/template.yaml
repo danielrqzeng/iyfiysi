@@ -303,6 +303,20 @@ templates:
     src: "proto_google_protobuf_descriptor.proto.tmpl"
     dst: "proto/google/protobuf/descriptor.proto"
     params:
+  - id: "proto_google_protobuf_any.proto"
+    flag: 5
+    name: "proto_google_protobuf_any.proto"
+    desc: "protobuf 依赖"
+    src: "proto_google_protobuf_any.proto.tmpl"
+    dst: "proto/google/protobuf/any.proto"
+    params:
+  - id: "proto_google_protobuf_struct.proto"
+    flag: 5
+    name: "proto_google_protobuf_struct.proto"
+    desc: "protobuf 依赖"
+    src: "proto_google_protobuf_struct.proto.tmpl"
+    dst: "proto/google/protobuf/struct.proto"
+    params:
   - id: "proto_google_rpc_code.proto"
     flag: 5
     name: "proto_google_rpc_code.proto"
@@ -323,6 +337,20 @@ templates:
     desc: "protobuf依赖"
     src: "proto_google_rpc_status.proto.tmpl"
     dst: "proto/google/rpc/status.proto"
+    params:
+  - id: "proto_protoc_gen_swagger_options_annotations.proto"
+    flag: 5
+    name: "proto_protoc_gen_swagger_options_annotations.proto"
+    desc: "protobuf依赖"
+    src: "proto_protoc_gen_swagger_options_annotations.proto.tmpl"
+    dst: "proto/protoc-gen-swagger/options/annotations.proto"
+    params:
+  - id: "proto_protoc_gen_swagger_options_openapiv2.proto"
+    flag: 5
+    name: "proto_protoc_gen_swagger_options_openapiv2.proto"
+    desc: "protobuf依赖"
+    src: "proto_protoc_gen_swagger_options_openapiv2.proto.tmpl"
+    dst: "proto/protoc-gen-swagger/options/openapiv2.proto"
     params:
   - id: "proto_service.proto"
     flag: 5

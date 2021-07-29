@@ -3,8 +3,50 @@ syntax = "proto3";
 package proto;
 option go_package = "proto";
 import "google/api/annotations.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// 2 定义 swagger 相关的内容
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+  info: {
+    title: "这是什么服务";
+    version: "1.0.0";
+    description: "服务细节说明";
+    license: {
+      name: "MIT";
+      url: "https://opensource.org/licenses/MIT";
+    };
+    contact: {
+      name: "公司名称",
+      url: "https://iyfiysi.com",
+      email: "admin@iyfiysi.com",
+    };
+  };
+  schemes: [HTTP, HTTPS];
+  consumes: "application/json";
+  produces: "application/json";
+
+  //  external_docs: {
+  //    description: "Determined AI Documentation",
+  //    url: "https://docs.determined.ai/",
+  //  };
+
+  responses: {
+    key: "403";
+    value: {
+      description: "Unauthorized";
+    }
+  }
+};
+
 
 message PingRequest {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+      json_schema: {
+        title: "心跳"
+        description: "每n秒发送一个心跳包"
+        required: ["value", "did_set"]
+      }
+    };
     string value = 1;
 }
 
@@ -22,5 +64,7 @@ service {{.AppName}}Service {
             //  body: "*"
             //}
         };
+        //swagger 目录
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "心跳"};
     }
 }
